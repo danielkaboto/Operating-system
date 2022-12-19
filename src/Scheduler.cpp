@@ -1,6 +1,12 @@
 #include <iostream>
 using namespace std;
 
+void Scheduling_Method();
+void Preemptive_Mode();
+void Show_Result();
+
+
+
 int main(void)
 {
     int choice;
@@ -13,13 +19,13 @@ int main(void)
         switch (choice)
         {
             case 1:
-                /* code */
+                Scheduling_Method();
                 break;
             case 2:
-                /* code */
+                Preemptive_Mode();
                 break;
             case 3:
-                /* code */
+                Show_Result();
                 break;
             case 4:
                 return 0;
@@ -33,8 +39,23 @@ int main(void)
     }
     while(choice>0 && choice <=4);
 
+
+
     return 0;
 
+}
 
+void Scheduling_Method()
+{
+
+}
+
+void Preemptive_Mode()
+{
+
+}
+
+void Show_Result()
+{
 
 }
