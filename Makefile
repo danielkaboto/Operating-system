@@ -10,7 +10,7 @@ LDFLAGS =
 # Makefile settings - Can be customized.
 APPNAME = os351
 EXT = .cpp
-SRCDIR = src
+SRCDIR = /home/daniel/AllCode/OS351
 OBJDIR = obj
 
 ############## Do not change anything from here downwards! #############
