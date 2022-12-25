@@ -1,13 +1,17 @@
-//importing the libraries needed for this project
+//------------------------- Importing the libraries needed for this project---------------------------//
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
 #include <fstream>
 #include <getopt.h>
+#include <string.h>
+#include <stdio.h>
+#define  size  1024         //string input data size
 
 using namespace std;
 
 //----------------------- prototypes of all the define function used --------------------------------// 
+int Menu();   // Prompt the menu to the user on the screen
 void Scheduling_Method();
 void Preemptive_Mode();
 void Show_Result();
@@ -17,9 +21,9 @@ int choice;
 
 // link list prototypes
 struct List_process *createNode(int , int , int );
-struct List_process *insertBack(struct List_process *, int, int);
+struct List_process *insertBack(struct List_process *, int, int,int);
 void Display(struct  List_process *);
-struct List_process *Builder(ifstream& , char * , struct List_process *);   // read the file and take the data fills up the linked list
+struct List_process *Builder(ifstream& , struct List_process *);   // read the file and take the data fills up the linked list
 
 //----------------------- Definition of the linked list ----------------------------------------//
 struct List_process
@@ -33,7 +37,9 @@ struct List_process
 
 };
 
+int num = 0;  // keep track on the Id number of new created process node
 
+//---------------------------- function to open the input input ----------------------------------//
 void openFile(ifstream& inFile , char *fname)
 {
     inFile.open(fname);
@@ -48,18 +54,22 @@ void openFile(ifstream& inFile , char *fname)
     }
 
 }
-void processFile(ifstream& inFile)
+struct List_process *processFile(ifstream& inFile, struct List_process *hdr)
 {
    
-    string line,word;
+    string line;
+    char word[size];
+    int Burst, Arrival , Priority;
     istringstream iss; // process the string 
+    if(inFile.good())
     while(!inFile.eof())
     {
         ///read line by line
         getline(inFile,line);
-        if (inFile.good()) // check if the process of getline was sucessfull
-        {
-          //  cout <<line <<endl;
+        // cout <<line <<endl;
+        //if (inFile.good()) // check if the process of getline was sucessfull
+        //{
+           cout <<line <<endl;
         //read word by word form the line
          iss.clear(); // clear out the state
          iss.str(line);
@@ -69,22 +79,18 @@ void processFile(ifstream& inFile)
            // cout << word << endl;
            // read char by char from the word
         
-           for( int i =0 ; i< word.length();i++)
+           for( int i =0 ; i< strlen(word);i++)
            { 
-                // check each character
-                if(word[i]==':')
-                    continue;
-                else if(word[i] == '\n')
-                    continue;
-                else
-                    cout << word[i] << endl;
+                   // cout << word[i] << endl;
+                    Burst = atoi(strtok(word, ":"));//stores digits bfr the ':'
+                    Arrival= atoi(strtok(NULL, ":"));//stores digits bfr the ':' starting at the point it left off
+                    Priority = atoi(strtok(NULL, "\n"));
+                    hdr = insertBack(hdr,Burst,Arrival,Priority);
            }
-          
          }
-
-
-        }
+        //}
     }
+    return hdr;
 
 }
 int main(int argc , char *argv[])
@@ -93,6 +99,7 @@ int main(int argc , char *argv[])
     int counter;          // getopt variable holder
     char *File_in;      //store the input file
     char *File_out;    // store the ouput file
+    struct List_process *header = NULL;     //original linked list root
 
     // make sure the number of arguments given by the user is not less than 4
     if(argc < 4)
@@ -118,17 +125,25 @@ int main(int argc , char *argv[])
         }
     }
 
-    // 1.open the file
+    // 1.open the file and check if it's open properly without error
     ifstream inFile;
     openFile(inFile, File_in);
+    header = Builder(inFile,header);
 
-    //2. Process the file
-    processFile(inFile);
+    //call the function of prompting first the Menu on the screen
+    Menu();
+
     inFile.close();
-    //header = Builder(inFile,File_in)
+    //check if we sucessfully create a linked with the data inside
+    Display(header);
 
 
-    int choice;
+    return 0;
+
+}
+int Menu()
+{
+     int choice;
     do
     {
         cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
@@ -160,12 +175,17 @@ int main(int argc , char *argv[])
     }
     while(choice>0 && choice <=4);
 
-    return 0;
+}
+struct List_process *Builder(ifstream& inFile, struct List_process *hdr)
+{
+     //2. Process the file
+    hdr =processFile(inFile,hdr);
+    return hdr;
+    
 
 }
 struct List_process *createNode( int Burst, int Arrival , int Priority)
 {
-    int num = 0;  // keep track on the Id number of new created process node
     struct List_process *temp;
     temp = (struct List_process *)malloc(sizeof(struct List_process));
     temp->Id = ++num;
@@ -207,8 +227,9 @@ void Display(struct List_process *header)
     while(temp != NULL)
     {
         cout <<"Process " << temp->Id << " : " << temp->Burst_time <<":"<<temp->Arrival_time
-             <<":" << temp->Priority;
+             <<":" << temp->Priority << endl;
         temp= temp->next;
+        
     }
     puts("");
 }
