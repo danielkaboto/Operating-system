@@ -7,10 +7,32 @@
 
 using namespace std;
 
-// prototypes of all the define function 
+//----------------------- prototypes of all the define function used --------------------------------// 
 void Scheduling_Method();
 void Preemptive_Mode();
 void Show_Result();
+
+// ----------------------- Variable definition and Declaration --------------------------------------//
+int choice;
+
+// link list prototypes
+struct List_process *createNode(int , int , int );
+struct List_process *insertBack(struct List_process *, int, int);
+void Display(struct  List_process *);
+struct List_process *Builder(ifstream& , char * , struct List_process *);   // read the file and take the data fills up the linked list
+
+//----------------------- Definition of the linked list ----------------------------------------//
+struct List_process
+{
+    int Id;     // store the ID of a process
+    int Burst_time;
+    int Arrival_time;
+    int Priority;
+    int Waiting_time;
+    struct List_process *next;
+
+};
+
 
 void openFile(ifstream& inFile , char *fname)
 {
@@ -70,7 +92,7 @@ int main(int argc , char *argv[])
     // reading the argument pass on the command line
     int counter;          // getopt variable holder
     char *File_in;      //store the input file
-    string File_out;    // store the ouput file
+    char *File_out;    // store the ouput file
 
     // make sure the number of arguments given by the user is not less than 4
     if(argc < 4)
@@ -103,6 +125,7 @@ int main(int argc , char *argv[])
     //2. Process the file
     processFile(inFile);
     inFile.close();
+    //header = Builder(inFile,File_in)
 
 
     int choice;
@@ -140,7 +163,55 @@ int main(int argc , char *argv[])
     return 0;
 
 }
+struct List_process *createNode( int Burst, int Arrival , int Priority)
+{
+    int num = 0;  // keep track on the Id number of new created process node
+    struct List_process *temp;
+    temp = (struct List_process *)malloc(sizeof(struct List_process));
+    temp->Id = ++num;
+    temp->Burst_time = Burst;
+    temp->Arrival_time = Arrival;
+    temp->Priority = Priority;
+    temp->next = NULL;
 
+    return temp;
+}
+
+struct List_process *insertBack(struct List_process *header, int Burst, int Arrival, int Priority)
+{
+    // create node
+    struct List_process *temp = createNode(Burst, Arrival,Priority);
+    struct List_process *headertemp;
+    if(header == NULL)
+    {
+        header = temp;
+        return header;
+    }
+
+    // find the end of the list
+    headertemp = header;
+    while(headertemp->next != NULL)
+    {
+        headertemp = headertemp->next;
+    }
+
+    headertemp->next = temp;
+    return header;
+}
+
+void Display(struct List_process *header)
+{
+    if(header == NULL)
+        puts("the list is empty");
+    struct List_process *temp= header;
+    while(temp != NULL)
+    {
+        cout <<"Process " << temp->Id << " : " << temp->Burst_time <<":"<<temp->Arrival_time
+             <<":" << temp->Priority;
+        temp= temp->next;
+    }
+    puts("");
+}
 void Scheduling_Method()
 {
 
