@@ -10,21 +10,27 @@
 
 using namespace std;
 
+//------------------------Prototypes function of  all  Scheduling method --------------------------------//
+void First_come();
+void Shortest_jobNP();              // shortest_jobs for the Non-preemptive
+void Shortest_jobP();               // shortest_jobs for the Preemptive
+void Priority_schNP();              // Priority scheduling for the Non-preemptive
+void Priority_schP() ;               // Priority scheduling for the Preemptive
+void Round_robin();
+
 //----------------------- prototypes of all the define function used --------------------------------// 
 int Menu();   // Prompt the menu to the user on the screen
+void Second_Menu();
 void Scheduling_Method();
 void Preemptive_Mode();
 void Show_Result();
 
-// ----------------------- Variable definition and Declaration --------------------------------------//
-int choice;
-
-// link list prototypes
+//------------------------------------- link list prototypes ---------------------------------------//
 struct List_process *createNode(int , int , int );
 struct List_process *insertBack(struct List_process *, int, int,int);
 void Display(struct  List_process *);
 struct List_process *Builder(ifstream& , struct List_process *);   // read the file and take the data fills up the linked list
-
+struct List_process *cloneList(struct List_process *);                  // clone 
 //----------------------- Definition of the linked list ----------------------------------------//
 struct List_process
 {
@@ -36,6 +42,15 @@ struct List_process
     struct List_process *next;
 
 };
+
+// ----------------------- Variable definition and Declaration --------------------------------------//
+int choice;
+ // reading the argument pass on the command line
+int counter;          // getopt variable holder
+char *File_in;      //store the input file
+char *File_out;    // store the ouput file
+struct List_process *header = NULL;     //original linked list root
+struct List_process *head;
 
 int num = 0;  // keep track on the Id number of new created process node
 
@@ -60,16 +75,14 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr)
     string line;
     char word[size];
     int Burst, Arrival , Priority;
-    istringstream iss; // process the string 
-    if(inFile.good())
+    istringstream iss;   // process the string 
+    if(inFile.good())   // check if the process of getline was sucessfull
     while(!inFile.eof())
     {
         ///read line by line
         getline(inFile,line);
-        // cout <<line <<endl;
-        //if (inFile.good()) // check if the process of getline was sucessfull
-        //{
-           cout <<line <<endl;
+        //cout <<line <<endl;
+
         //read word by word form the line
          iss.clear(); // clear out the state
          iss.str(line);
@@ -82,25 +95,19 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr)
            for( int i =0 ; i< strlen(word);i++)
            { 
                    // cout << word[i] << endl;
-                    Burst = atoi(strtok(word, ":"));//stores digits bfr the ':'
-                    Arrival= atoi(strtok(NULL, ":"));//stores digits bfr the ':' starting at the point it left off
+                    Burst = atoi(strtok(word, ":"));        //stores digits bfr the ':'
+                    Arrival= atoi(strtok(NULL, ":"));       //stores digits bfr the ':' starting at the point it left off
                     Priority = atoi(strtok(NULL, "\n"));
                     hdr = insertBack(hdr,Burst,Arrival,Priority);
            }
          }
-        //}
+        
     }
     return hdr;
 
 }
 int main(int argc , char *argv[])
 {
-    // reading the argument pass on the command line
-    int counter;          // getopt variable holder
-    char *File_in;      //store the input file
-    char *File_out;    // store the ouput file
-    struct List_process *header = NULL;     //original linked list root
-
     // make sure the number of arguments given by the user is not less than 4
     if(argc < 4)
     {
@@ -129,13 +136,15 @@ int main(int argc , char *argv[])
     ifstream inFile;
     openFile(inFile, File_in);
     header = Builder(inFile,header);
-
+    //check if the linked list was successsfully create
+    //Display(header);
     //call the function of prompting first the Menu on the screen
     Menu();
-
+   // head = cloneList(header);
+    //check if we sucessfully create copy a linked with the data inside
+   // Display(head);
     inFile.close();
-    //check if we sucessfully create a linked with the data inside
-    Display(header);
+
 
 
     return 0;
@@ -174,7 +183,6 @@ int Menu()
 
     }
     while(choice>0 && choice <=4);
-
 }
 struct List_process *Builder(ifstream& inFile, struct List_process *hdr)
 {
@@ -218,6 +226,24 @@ struct List_process *insertBack(struct List_process *header, int Burst, int Arri
     headertemp->next = temp;
     return header;
 }
+struct List_process *cloneList(struct List_process *head)
+{
+    int Burst_time , Arrival_time , Priority;
+	struct List_process *header_temp = head;
+	struct List_process *clone_header = NULL;
+
+	while (header_temp != NULL)
+	{
+		Burst_time= header_temp->Burst_time;
+		Arrival_time = header_temp->Arrival_time;
+		Priority = header_temp->Priority;
+		clone_header = insertBack(clone_header,Burst_time, Arrival_time, Priority);
+
+		header_temp = header_temp->next;
+	}
+
+	return clone_header;
+}
 
 void Display(struct List_process *header)
 {
@@ -235,6 +261,49 @@ void Display(struct List_process *header)
 }
 void Scheduling_Method()
 {
+    int choice;
+    do
+    {
+        cout<< "-------------------- Scheduling Method-------------------------------"<< endl;
+        cout<<" 1. None: None of scheduling method chosen\n 2. First Come, First Served Scheduling\n "
+            << "3. Shortest-Job-First Scheduling\n 4.Priority Scheduling\n 5. Round-Robin Scheduling\n";
+        cout<<" Method > ";
+        cin >> choice;
+        switch (choice)
+        {
+            case 1:
+                char user;
+                cout<<" ----------NO SCHEDULING METHOD WAS CHOOSE-----------"<<endl
+                    <<" ******Do you want to go Back to the main Menu(Y/N)*******"<<endl;
+                cin >> user;
+                if(user == 'Y' || user =='y')
+                    Menu();
+                else if (user =='N' || user == 'n')
+                    Scheduling_Method();
+                else
+                    cout <<"You enter a invalid character use Y or N !!!";
+                
+                break;
+            case 2:
+                First_come();
+                break;
+            case 3:
+                Shortest_jobNP();
+                break;
+            case 4:
+                Priority_schNP();
+                break;
+            case 5:
+                Round_robin();
+                break;
+            default:
+                cout <<"please enter the correct choice !!" << endl;
+                break;
+        }
+
+    }
+    while(choice>0 && choice <=4);
+
 
 }
 
@@ -250,4 +319,24 @@ void Show_Result()
 
   
 
+}
+
+
+void First_come()
+{
+    cout<<"you are in First_ccome" << endl;
+}
+void Shortest_jobNP()
+{
+    cout<<" you are in the shortest job" << endl;
+}
+
+void Priority_schNP()
+{
+    cout <<" you are in the Priority job " << endl;
+}
+
+void Round_robin()
+{
+    cout <<"You are in the round robin " <<endl;
 }
