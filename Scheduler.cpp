@@ -39,6 +39,7 @@ struct List_process
     int Arrival_time;
     int Priority;
     int Waiting_time;
+    int Turn_around_time;
     struct List_process *next;
 
 };
@@ -253,7 +254,8 @@ void Display(struct List_process *header)
     while(temp != NULL)
     {
         cout <<"Process " << temp->Id << " : " << temp->Burst_time <<":"<<temp->Arrival_time
-             <<":" << temp->Priority << endl;
+             <<":" << temp->Priority ;
+        cout<<"--"<<temp->Waiting_time<<endl;
         temp= temp->next;
         
     }
@@ -324,7 +326,26 @@ void Show_Result()
 
 void First_come()
 {
-    cout<<"you are in First_ccome" << endl;
+    struct List_process *headtemp = cloneList(header);
+    struct List_process *temp1 = NULL;
+    struct List_process *temp2 = NULL;
+    
+   // ------------------ we are calculating the waiting time for each process ---------------------// 
+    //the first process the waitting is 0
+    headtemp->Waiting_time = 0;
+    temp1 = headtemp;           // the first node
+    temp2= headtemp->next;     // the next node
+
+    while(temp2!=NULL)
+    {
+        temp2->Waiting_time= temp1->Burst_time + temp1->Waiting_time;
+        temp1= temp1->next;
+        temp2=temp2->next;
+        
+    }
+    //check if the waiting time calculation went well
+  // Display(headtemp);
+//----------------------------------------------------------------------------------------------//
 }
 void Shortest_jobNP()
 {
