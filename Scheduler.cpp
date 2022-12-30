@@ -255,7 +255,8 @@ void Display(struct List_process *header)
     {
         cout <<"Process " << temp->Id << " : " << temp->Burst_time <<":"<<temp->Arrival_time
              <<":" << temp->Priority ;
-        cout<<"--"<<temp->Waiting_time<<endl;
+        cout<<"--"<<temp->Waiting_time;
+        cout << " ----" << temp->Turn_around_time<<endl;
         temp= temp->next;
         
     }
@@ -335,7 +336,7 @@ void First_come()
     headtemp->Waiting_time = 0;
     temp1 = headtemp;           // the first node
     temp2= headtemp->next;     // the next node
-
+    // waiting time = waiting[i] + burst[i+1]
     while(temp2!=NULL)
     {
         temp2->Waiting_time= temp1->Burst_time + temp1->Waiting_time;
@@ -345,7 +346,37 @@ void First_come()
     }
     //check if the waiting time calculation went well
   // Display(headtemp);
-//----------------------------------------------------------------------------------------------//
+//---------------------------------TURN AROUND TIME -----------------------------------------------//
+    struct List_process * T1=NULL;
+    T1 = headtemp;
+    while(T1!=NULL)
+    {
+        T1->Turn_around_time = T1->Waiting_time+T1->Burst_time;
+        T1= T1->next;
+    }
+    //check if the calculation went well
+    //Display(headtemp);
+//----------------------------------- AVERAGE WAITING TIME -----------------------------------//
+    // Average time = Total waitinti time / number of process
+    struct List_process *Final = NULL;
+    Final = headtemp;
+    int counter =0;    // keep track on the number of the process 
+    double Total_waiting=0;
+    double Total_Burst =0;
+    double avg;
+
+    for(int i=0 ; headtemp != NULL ; i++)
+    {
+        Total_waiting += headtemp->Waiting_time;
+        Total_Burst += headtemp-> Burst_time;
+        //headtemp->Id =i++; // the title of the process
+        counter++;
+        headtemp = headtemp->next;
+    }
+    Display(header);
+    avg = Total_waiting/counter;
+    cout <<"the average time is : " << avg <<endl;
+
 }
 void Shortest_jobNP()
 {
