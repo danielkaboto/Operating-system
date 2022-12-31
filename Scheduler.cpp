@@ -34,7 +34,8 @@ struct List_process *cloneList(struct List_process *);
 struct List_process *Merge_sort(struct List_process *);
 struct List_process *merge(struct List_process *, struct List_process *);
 struct List_process *mid_point(struct List_process *);
-void mysort(struct List_process *&head,struct List_process *p1,struct List_process *p2);
+void mysort_Br(struct List_process *&,struct List_process *,struct List_process *);
+void mysort_Pr(struct List_process *&,struct List_process *,struct List_process *);
 
 
            // clone 
@@ -259,7 +260,7 @@ struct List_process *cloneList(struct List_process *head)
             node->Id = current->Id;
             node->Burst_time = current->Burst_time;
             node->Arrival_time = current->Arrival_time;
-            node->Arrival_time = current->Arrival_time;
+            node->Priority = current->Priority;
             node->next = NULL;
         }
         current = current->next;
@@ -406,7 +407,7 @@ void Shortest_jobNP()
     struct List_process *temp1 = head;
     struct List_process *temp2=NULL;
     //call the sort funtion 
-    mysort(head,head,head->next);
+    mysort_Br(head,head,head->next);
 
     //------------------------------ waiting time calculation -------------------------------- //
     head->Waiting_time =0;
@@ -446,7 +447,7 @@ void Shortest_jobNP()
     cout<<" you are in the shortest job" << endl;
 }
 
-void mysort(struct List_process *&head,struct List_process *ht,struct List_process *temp)
+void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
     {
@@ -461,17 +462,85 @@ void mysort(struct List_process *&head,struct List_process *ht,struct List_proce
             swap(ht->Burst_time,next_node->Burst_time);
             swap(ht->Arrival_time,next_node->Arrival_time);
             swap(ht->Priority,next_node->Priority);
+            swap(ht->Turn_around_time,next_node->Turn_around_time);
+            swap(ht->Waiting_time, next_node->Waiting_time);
 
             
         }
        
         next_node=next_node->next;
     }
-    mysort(head,temp,ht->next);
+    mysort_Br(head,temp,ht->next);
+}
+
+void mysort_Pr(struct List_process *&head,struct List_process *ht,struct List_process *temp)
+{
+    if(temp==NULL)
+    {
+        return;
+    }
+   struct List_process *next_node=ht->next;
+   while(next_node!=NULL)
+    {
+        if(ht->Priority > next_node->Priority)
+        {
+            swap(ht->Id,next_node->Id);
+            swap(ht->Burst_time,next_node->Burst_time);
+            swap(ht->Arrival_time,next_node->Arrival_time);
+            swap(ht->Priority,next_node->Priority);
+            swap(ht->Turn_around_time,next_node->Turn_around_time);
+            swap(ht->Waiting_time, next_node->Waiting_time);
+
+            
+        }
+       
+        next_node=next_node->next;
+    }
+    mysort_Pr(head,temp,ht->next);
 }
 
 void Priority_schNP()
 {
+    struct List_process *head = cloneList(header);
+    struct List_process *temp = head;
+    struct List_process *temp2= head->next;
+
+    //-------------------------------- sort the linked list according to the priority time --------------------------------//
+    mysort_Pr(head,temp,temp2);
+    //--------------------------------- Waiting time calculation ---------------------------------------------------------//
+     head->Waiting_time =0;
+
+    while(temp2 !=NULL)
+    {
+        temp2->Waiting_time= temp->Burst_time + temp->Waiting_time;
+        temp= temp->next;
+        temp2=temp2->next;
+
+    }
+    //------------------------------------------- Turn Around Time ------------------------------------------//
+    struct List_process *temp3= head;
+    while(temp3!=NULL)
+    {
+        temp3->Turn_around_time = temp3->Waiting_time + temp3->Burst_time;
+        temp3 = temp3->next;
+    }
+    //---------------------------------------  Average waiting Time ---------------------------------------//
+    struct List_process *Final=head;
+    int counter = 0;
+    double Total_waiting=0;
+    double Total_burst=0;
+    double avg;
+    for(int i=0 ; head!=NULL; i++)
+    {
+        Total_burst += head->Burst_time;
+        Total_waiting +=head->Waiting_time;
+        counter ++;
+        head= head->next;
+    }
+    Display(Final);
+    avg = Total_waiting/counter;
+    cout <<"The average Waiting time is : "<< avg <<endl;
+
     cout <<" you are in the Priority job " << endl;
 }
 
