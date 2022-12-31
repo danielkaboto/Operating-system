@@ -30,7 +30,14 @@ struct List_process *createNode(int , int , int );
 struct List_process *insertBack(struct List_process *, int, int,int);
 void Display(struct  List_process *);
 struct List_process *Builder(ifstream& , struct List_process *);   // read the file and take the data fills up the linked list
-struct List_process *cloneList(struct List_process *);                  // clone 
+struct List_process *cloneList(struct List_process *);       
+struct List_process *Merge_sort(struct List_process *);
+struct List_process *merge(struct List_process *, struct List_process *);
+struct List_process *mid_point(struct List_process *);
+void mysort(struct List_process *&head,struct List_process *p1,struct List_process *p2);
+
+
+           // clone 
 //----------------------- Definition of the linked list ----------------------------------------//
 struct List_process
 {
@@ -229,21 +236,36 @@ struct List_process *insertBack(struct List_process *header, int Burst, int Arri
 }
 struct List_process *cloneList(struct List_process *head)
 {
-    int Burst_time , Arrival_time , Priority;
-	struct List_process *header_temp = head;
-	struct List_process *clone_header = NULL;
+    struct List_process *current = head;
+    struct List_process *newList = NULL;
+    struct List_process *node = NULL;
 
-	while (header_temp != NULL)
-	{
-		Burst_time= header_temp->Burst_time;
-		Arrival_time = header_temp->Arrival_time;
-		Priority = header_temp->Priority;
-		clone_header = insertBack(clone_header,Burst_time, Arrival_time, Priority);
+    while(current != NULL)
+    {
+        if(newList == NULL)
+        {
+            newList = (struct List_process *)malloc(sizeof(struct List_process));
+            newList->Id = current->Id;
+            newList->Burst_time = current->Burst_time;
+            newList->Arrival_time = current->Arrival_time;
+            newList->Priority = current->Priority;
 
-		header_temp = header_temp->next;
-	}
+            newList->next = NULL;
+            node = newList;
+        }
+        else{
+            node->next = (struct List_process *)malloc(sizeof(struct List_process));
+            node = node->next;
+            node->Id = current->Id;
+            node->Burst_time = current->Burst_time;
+            node->Arrival_time = current->Arrival_time;
+            node->Arrival_time = current->Arrival_time;
+            node->next = NULL;
+        }
+        current = current->next;
+    }
+    return newList;
 
-	return clone_header;
 }
 
 void Display(struct List_process *header)
@@ -373,14 +395,36 @@ void First_come()
         counter++;
         headtemp = headtemp->next;
     }
-    Display(header);
+   // Display(Final);
     avg = Total_waiting/counter;
     cout <<"the average time is : " << avg <<endl;
 
 }
 void Shortest_jobNP()
 {
+    struct List_process *head = cloneList(header);
+    mysort(head,head,head->next);
+    Display(head);
+      
     cout<<" you are in the shortest job" << endl;
+}
+
+void mysort(struct List_process *&head,struct List_process *ht,struct List_process *temp)
+{
+    if(temp==NULL)
+    {
+        return;
+    }
+   struct List_process *next_node=ht->next;
+   while(next_node!=NULL)
+    {
+        if(ht->Burst_time > next_node->Burst_time)
+        {
+            swap(ht->Burst_time,next_node->Burst_time);
+        }
+        next_node=next_node->next;
+    }
+    mysort(head,temp,ht->next);
 }
 
 void Priority_schNP()
