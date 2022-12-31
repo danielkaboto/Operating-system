@@ -403,8 +403,45 @@ void First_come()
 void Shortest_jobNP()
 {
     struct List_process *head = cloneList(header);
+    struct List_process *temp1 = head;
+    struct List_process *temp2=NULL;
+    //call the sort funtion 
     mysort(head,head,head->next);
-    Display(head);
+
+    //------------------------------ waiting time calculation -------------------------------- //
+    head->Waiting_time =0;
+    temp2 = head->next;
+
+    while(temp2 !=NULL)
+    {
+        temp2->Waiting_time= temp1->Burst_time + temp1->Waiting_time;
+        temp1= temp1->next;
+        temp2=temp2->next;
+
+    }
+    //------------------------------------------- Turn Around Time ------------------------------------------//
+    struct List_process *temp3= head;
+    while(temp3!=NULL)
+    {
+        temp3->Turn_around_time = temp3->Waiting_time + temp3->Burst_time;
+        temp3 = temp3->next;
+    }
+    //---------------------------------------  Average waiting Time ---------------------------------------//
+    struct List_process *Final=head;
+    int counter = 0;
+    double Total_waiting=0;
+    double Total_burst=0;
+    double avg;
+    for(int i=0 ; head!=NULL; i++)
+    {
+        Total_burst += head->Burst_time;
+        Total_waiting +=head->Waiting_time;
+        counter ++;
+        head= head->next;
+    }
+    Display(Final);
+    avg = Total_waiting/counter;
+    cout <<"The average Waiting time is : "<< avg <<endl;
       
     cout<<" you are in the shortest job" << endl;
 }
@@ -420,8 +457,14 @@ void mysort(struct List_process *&head,struct List_process *ht,struct List_proce
     {
         if(ht->Burst_time > next_node->Burst_time)
         {
+            swap(ht->Id,next_node->Id);
             swap(ht->Burst_time,next_node->Burst_time);
+            swap(ht->Arrival_time,next_node->Arrival_time);
+            swap(ht->Priority,next_node->Priority);
+
+            
         }
+       
         next_node=next_node->next;
     }
     mysort(head,temp,ht->next);
