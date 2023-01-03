@@ -19,10 +19,10 @@ void Priority_schP() ;               // Priority scheduling for the Preemptive
 void Round_robin();
 
 //----------------------- prototypes of all the define function used --------------------------------// 
-int Menu();   // Prompt the menu to the user on the screen
+int Menu(string );   // Prompt the menu to the user on the screen
 void Second_Menu();
-void Scheduling_Method();
-void Preemptive_Mode();
+void Scheduling_Method(string);
+void Preemptive_Mode(string);
 void Show_Result();
 
 //------------------------------------- link list prototypes ---------------------------------------//
@@ -53,8 +53,8 @@ struct List_process
 };
 
 // ----------------------- Variable definition and Declaration --------------------------------------//
-int choice;
- // reading the argument pass on the command line
+static int choice;
+static string choice_str ="OFF";
 int counter;          // getopt variable holder
 char *File_in;      //store the input file
 char *File_out;    // store the ouput file
@@ -62,6 +62,7 @@ struct List_process *header = NULL;     //original linked list root
 struct List_process *head;
 
 int num = 0;  // keep track on the Id number of new created process node
+
 
 //---------------------------- function to open the input input ----------------------------------//
 void openFile(ifstream& inFile , char *fname)
@@ -148,7 +149,7 @@ int main(int argc , char *argv[])
     //check if the linked list was successsfully create
     //Display(header);
     //call the function of prompting first the Menu on the screen
-    Menu();
+    Menu(choice_str);
    // head = cloneList(header);
     //check if we sucessfully create copy a linked with the data inside
    // Display(head);
@@ -159,40 +160,79 @@ int main(int argc , char *argv[])
     return 0;
 
 }
-int Menu()
+int Menu(string choice_str)
 {
-     int choice;
-    do
+    int choice;
+    if(choice_str =="OFF")
     {
-        cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
-        cout<<" 1. SCHEDULING METHOD(NONE)\n 2. PREEMPTIVE MODE(OFF)\n 3. SHOW RESULT\n 4.END PROGRAM\n";
-        cout<<" Option > ";
-        cin >> choice;
-        switch (choice)
+        do
         {
-            case 1:
-              //  inside_File_in(File_in, File_out);
-                Scheduling_Method();
+            cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
+            cout<<" 1. SCHEDULING METHOD(NONE)\n 2. PREEMPTIVE MODE(OFF)\n 3. SHOW RESULT\n 4.END PROGRAM\n";
+            cout<<" Option > ";
+            cin >> choice;
+            switch (choice)
+            {
+                case 1:
+                //  inside_File_in(File_in, File_out);
+                    Scheduling_Method(choice_str);
+                    
+                    break;
+                case 2:
+                    Preemptive_Mode(choice_str);
+                    break;
+                case 3:
+                    Show_Result();
+                    break;
+                case 4:
+                    return 0;
+                    break;
                 
-                break;
-            case 2:
-                Preemptive_Mode();
-                break;
-            case 3:
-                Show_Result();
-                break;
-            case 4:
-                return 0;
-                break;
-            
-            default:
-                cout <<"please enter the correct choice !!" << endl;
-                break;
-        }
+                default:
+                    cout <<"please enter the correct choice !!" << endl;
+                    break;
+            }
 
+        }
+        while(choice>0 && choice <=4);
     }
-    while(choice>0 && choice <=4);
+    else
+    {
+        do
+        {
+            
+                cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
+                cout<<" 1. SCHEDULING METHOD(NONE)\n 2. PREEMPTIVE MODE(ON)\n 3. SHOW RESULT\n 4.END PROGRAM\n";
+                cout<<" Option > ";
+                cin >> choice;
+                switch (choice)
+                {
+                    case 1:
+                    //  inside_File_in(File_in, File_out);
+                        Scheduling_Method(choice_str);
+                        
+                        break;
+                    case 2:
+                        Preemptive_Mode(choice_str);
+                        break;
+                    case 3:
+                        Show_Result();
+                        break;
+                    case 4:
+                        return 0;
+                        break;
+                    
+                    default:
+                        cout <<"please enter the correct choice !!" << endl;
+                        break;
+                }
+
+        }
+        while(choice>0 && choice <=4);
+    }
+
 }
+
 struct List_process *Builder(ifstream& inFile, struct List_process *hdr)
 {
      //2. Process the file
@@ -285,9 +325,11 @@ void Display(struct List_process *header)
     }
     puts("");
 }
-void Scheduling_Method()
+void Scheduling_Method(string choice_str)
 {
     int choice;
+    if(choice_str == "OFF")
+    {
     do
     {
         cout<< "-------------------- Scheduling Method-------------------------------"<< endl;
@@ -301,14 +343,14 @@ void Scheduling_Method()
                 char user;
                 cout<<" ----------NO SCHEDULING METHOD WAS CHOOSE-----------"<<endl
                     <<" ******Do you want to go Back to the main Menu(Y/N)*******"<<endl;
+                cout<<"Answers > ";
                 cin >> user;
                 if(user == 'Y' || user =='y')
-                    Menu();
+                    Menu(choice_str);
                 else if (user =='N' || user == 'n')
-                    Scheduling_Method();
+                    Scheduling_Method(choice_str);
                 else
-                    cout <<"You enter a invalid character use Y or N !!!";
-                
+                    cout <<"You enter a invalid character use Y or N !!!"<<endl;
                 break;
             case 2:
                 First_come();
@@ -328,14 +370,80 @@ void Scheduling_Method()
         }
 
     }
+    while(choice>0 && choice <=5);
+    }
+    else
+    {
+        do
+    {
+        cout<< "-------------------- Scheduling Method-------------------------------"<< endl;
+        cout<<" 1. None: None of scheduling method chosen\n "
+            << "2. Shortest-Job-First Scheduling\n 3. Priority Scheduling\n 4. Round-Robin Scheduling\n";
+        cout<<" Method > ";
+        cin >> choice;
+        switch (choice)
+        {
+            case 1:
+                char user;
+                cout<<" ----------NO SCHEDULING METHOD WAS CHOOSE-----------"<<endl
+                    <<" ******Do you want to go Back to the main Menu(Y/N)*******"<<endl;
+                cout<<"Answers > ";
+                cin >> user;
+                if(user == 'Y' || user =='y')
+                    Menu(choice_str);
+                else if (user =='N' || user == 'n')
+                    Scheduling_Method(choice_str);
+                else
+                    cout <<"You enter a invalid character use Y or N !!!"<<endl;
+                
+                break;
+            case 2:
+                Shortest_jobP();
+                break;
+            case 3:
+                Priority_schP();
+                break;
+            case 4:
+                Round_robin();
+                break;
+            default:
+                cout <<"please enter the correct choice !!" << endl;
+                sleep(2);
+                Scheduling_Method(choice_str);
+                break;
+        }
+
+    }
     while(choice>0 && choice <=4);
 
-
+    }
 }
 
-void Preemptive_Mode()
+void Preemptive_Mode(string choice_str)
 {
-   
+    int choice;
+    cout<<"-------------------------------------------------------------------------------------------------"<<endl;
+    cout <<"<< WARNING !!! THE PREEMPITVE MODE WILL AFFECT WILL AFFECT THE SCHEDULING METHOD MENU !!!>>"<<endl;
+    cout <<" Enable the Preemptive mode \n \t 1.OFF\n \t 2.ON" <<endl;
+    cout<<"Answers > ";
+    cin >> choice;
+    switch(choice)
+    {
+        case 1:
+            choice_str = "OFF";
+            Menu(choice_str);
+            break;
+        case 2:
+            choice_str ="ON";
+            Menu(choice_str);
+            break;
+        default:
+            cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
+            sleep(5);
+            Preemptive_Mode(choice_str);
+            break;
+
+    }
 
 }
 
@@ -446,7 +554,7 @@ void Shortest_jobNP()
       
     cout<<" you are in the shortest job" << endl;
 }
-
+//----------------------------------- functio to sort accorging to a burst time------------------------------------//
 void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -472,7 +580,7 @@ void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_pr
     }
     mysort_Br(head,temp,ht->next);
 }
-
+//*-------------funtionto sort the Priority scheduling -------------------------------------------
 void mysort_Pr(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -547,4 +655,16 @@ void Priority_schNP()
 void Round_robin()
 {
     cout <<"You are in the round robin " <<endl;
+}
+
+void Shortest_jobP()
+{
+    cout <<"you are in the shortest job preemptive" <<endl;
+
+}
+
+void Priority_schP()
+{
+    cout <<"you are in the Priority scheduling preemptive"<<endl;
+
 }
