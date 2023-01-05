@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <stdio.h>
+#include <climits>
 #define  size  1024         //string input data size
 
 using namespace std;
@@ -24,6 +25,7 @@ void Second_Menu();
 void Scheduling_Method(string);
 void Preemptive_Mode(string);
 void Show_Result();
+int process_counter(struct List_process *);
 
 //------------------------------------- link list prototypes ---------------------------------------//
 struct List_process *createNode(int , int , int );
@@ -34,9 +36,9 @@ struct List_process *cloneList(struct List_process *);
 struct List_process *Merge_sort(struct List_process *);
 struct List_process *merge(struct List_process *, struct List_process *);
 struct List_process *mid_point(struct List_process *);
-void mysort_Br(struct List_process *&,struct List_process *,struct List_process *);
-void mysort_Pr(struct List_process *&,struct List_process *,struct List_process *);
-
+void mysort_Br(struct List_process *&,struct List_process *,struct List_process *); //sorting according to burst time
+void mysort_Pr(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to Priority
+void mysort_Ar(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to the Arrival time
 
            // clone 
 //----------------------- Definition of the linked list ----------------------------------------//
@@ -48,6 +50,10 @@ struct List_process
     int Priority;
     int Waiting_time;
     int Turn_around_time;
+    bool is_completed = false;
+    int bt_remaining;
+    int completion_time;
+    bool is_first = false;
     struct List_process *next;
 
 };
@@ -58,8 +64,7 @@ static string choice_str ="OFF";
 int counter;          // getopt variable holder
 char *File_in;      //store the input file
 char *File_out;    // store the ouput file
-struct List_process *header = NULL;     //original linked list root
-struct List_process *head;
+struct List_process *header=NULL;     //original linked list root
 
 int num = 0;  // keep track on the Id number of new created process node
 
@@ -319,7 +324,7 @@ void Display(struct List_process *header)
         cout <<"Process " << temp->Id << " : " << temp->Burst_time <<":"<<temp->Arrival_time
              <<":" << temp->Priority ;
         cout<<"--"<<temp->Waiting_time;
-        cout << " ----" << temp->Turn_around_time<<endl;
+        cout << " ----" << temp->Turn_around_time<<"     " << temp->is_completed<<endl;
         temp= temp->next;
         
     }
@@ -554,7 +559,7 @@ void Shortest_jobNP()
       
     cout<<" you are in the shortest job" << endl;
 }
-//----------------------------------- functio to sort accorging to a burst time------------------------------------//
+//----------------------------------- function to sort accorging to a burst time------------------------------------//
 void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -575,12 +580,13 @@ void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_pr
 
             
         }
+        
        
         next_node=next_node->next;
     }
     mysort_Br(head,temp,ht->next);
 }
-//*-------------funtionto sort the Priority scheduling -------------------------------------------
+//*-------------function to sort the Priority scheduling -------------------------------------------
 void mysort_Pr(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -605,6 +611,48 @@ void mysort_Pr(struct List_process *&head,struct List_process *ht,struct List_pr
         next_node=next_node->next;
     }
     mysort_Pr(head,temp,ht->next);
+}
+
+//------------------------------- Funtion to sort according to the Arrival Time -----------------------------------------//
+void mysort_Ar(struct List_process *&head,struct List_process *ht,struct List_process *temp)
+{
+    if(temp==NULL)
+    {
+        return;
+    }
+   struct List_process *next_node=ht->next;
+   while(next_node!=NULL)
+    {
+        if(ht->Arrival_time > next_node->Arrival_time )
+        {
+            swap(ht->Id,next_node->Id);
+            swap(ht->Burst_time,next_node->Burst_time);
+            swap(ht->Arrival_time,next_node->Arrival_time);
+            swap(ht->Priority,next_node->Priority);
+            swap(ht->Turn_around_time,next_node->Turn_around_time);
+            swap(ht->Waiting_time, next_node->Waiting_time);
+
+            
+        }
+        else if(ht->Arrival_time == next_node->Arrival_time)
+        {
+            if(ht->Id > next_node->Id)
+            {
+                swap(ht->Id,next_node->Id);
+                swap(ht->Burst_time,next_node->Burst_time);
+                swap(ht->Arrival_time,next_node->Arrival_time);
+                swap(ht->Priority,next_node->Priority);
+                swap(ht->Turn_around_time,next_node->Turn_around_time);
+                swap(ht->Waiting_time, next_node->Waiting_time);
+
+            }
+        }
+        
+        
+        next_node=next_node->next;
+    }
+    mysort_Ar(head,temp,ht->next);
+
 }
 
 void Priority_schNP()
@@ -651,6 +699,19 @@ void Priority_schNP()
 
     cout <<" you are in the Priority job " << endl;
 }
+//-------------------------------- Count the number of element in the Linked List -----------------------------------------//
+int process_counter(struct List_process *header)
+{
+	struct List_process *temp = header;
+	int Arr = 0;
+	while (temp != NULL)
+	{
+		Arr+=temp->Arrival_time;
+		temp = temp->next;
+	}
+
+	return counter;
+}
 
 void Round_robin()
 {
@@ -659,7 +720,52 @@ void Round_robin()
 
 void Shortest_jobP()
 {
-    cout <<"you are in the shortest job preemptive" <<endl;
+    struct List_process *head = cloneList(header);
+    struct List_process *temp1 = head;
+    struct List_process *swapper =NULL:
+    //call the sort funtion 
+    mysort_Ar(head,head,head->next); // sort according to the arrival time
+    int num = process_counter(head); // store the total amount of the arrival time 
+    int current_time=0, completed=0;
+    int ct_init = 0;
+    
+    cout <<fixed << setprecision(2);
+    while(completed!=num) // until all the process are completed 
+    {
+        while(temp1!=NULL) 
+        {
+            if( temp1->Arrival_time == ct_init && temp1->is_completed == false)
+            {
+                current_time++;
+                for(int i ; i < num ; i++)
+                {
+                    if(current_time == temp1->next->Arrival_time && temp1->next->is_completed ==  false)
+                    {
+                        if(temp1->Burst_time <= temp1->next->Burst_time)
+                        {
+                            temp1->bt_remaining= temp1->Burst_time --; // decrement the burst time
+                            swapper = temp1->next;
+                            //function to push the next proces (swapper) in the queue
+                            if(temp1->is_first) // if its the first process
+                            {
+                                int wt  = 0;
+                                int tat = temp1->Burst_time - temp1->Arrival_time;
+                            }
+                        }
+                        else()
+                        {
+                            swapper = temp1;
+                            // function to push the current process(swapper) to the queue
+
+                        }
+                    }
+                    
+                }
+            }
+            temp1 = temp->next;
+        }
+        
+    }
 
 }
 
