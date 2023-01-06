@@ -21,26 +21,29 @@ void Round_robin();
 
 //----------------------- prototypes of all the define function used --------------------------------// 
 int Menu(string );   // Prompt the menu to the user on the screen
-void Second_Menu();
+void Second_Menu(string);
 void Scheduling_Method(string);
-void Preemptive_Mode(string);
-void Show_Result();
+void Preemptive_Mode(string,string);
+int Show_Result(struct List_process * , string, double);
 int process_counter(struct List_process *);
 
 //------------------------------------- link list prototypes ---------------------------------------//
 struct List_process *createNode(int , int , int );
 struct List_process *insertBack(struct List_process *, int, int,int);
 void Display(struct  List_process *);
-struct List_process *Builder(ifstream& , struct List_process *);   // read the file and take the data fills up the linked list
 struct List_process *cloneList(struct List_process *);       
 struct List_process *Merge_sort(struct List_process *);
 struct List_process *merge(struct List_process *, struct List_process *);
 struct List_process *mid_point(struct List_process *);
+//----------------------------................ FCFS Algorithm --------------------------------------------------//
+int waiting_time(struct List_process *);
+int Turn_around_time(struct List_process *);
+void Average_time(struct List_process *, string);
+//--------------------------------------------Sorted Algorithm --------------------------------------------------------//
 void mysort_Br(struct List_process *&,struct List_process *,struct List_process *); //sorting according to burst time
 void mysort_Pr(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to Priority
 void mysort_Ar(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to the Arrival time
 
-           // clone 
 //----------------------- Definition of the linked list ----------------------------------------//
 struct List_process
 {
@@ -84,7 +87,7 @@ void openFile(ifstream& inFile , char *fname)
     }
 
 }
-struct List_process *processFile(ifstream& inFile, struct List_process *hdr)
+struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // read the file and take the data fills up the linked list
 {
    
     string line;
@@ -150,7 +153,7 @@ int main(int argc , char *argv[])
     // 1.open the file and check if it's open properly without error
     ifstream inFile;
     openFile(inFile, File_in);
-    header = Builder(inFile,header);
+    header = processFile(inFile,header);
     //check if the linked list was successsfully create
     //Display(header);
     //call the function of prompting first the Menu on the screen
@@ -172,6 +175,7 @@ int Menu(string choice_str)
     {
         do
         {
+            system("clear");
             cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
             cout<<" 1. SCHEDULING METHOD(NONE)\n 2. PREEMPTIVE MODE(OFF)\n 3. SHOW RESULT\n 4.END PROGRAM\n";
             cout<<" Option > ";
@@ -184,10 +188,11 @@ int Menu(string choice_str)
                     
                     break;
                 case 2:
-                    Preemptive_Mode(choice_str);
+                    Preemptive_Mode(choice_str , "YES");
                     break;
                 case 3:
-                    Show_Result();
+                    cout <<"<< Please select Scheduling Method first >>"<<endl;
+                    sleep(2);
                     break;
                 case 4:
                     return 0;
@@ -205,12 +210,12 @@ int Menu(string choice_str)
     {
         do
         {
-            
-                cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
-                cout<<" 1. SCHEDULING METHOD(NONE)\n 2. PREEMPTIVE MODE(ON)\n 3. SHOW RESULT\n 4.END PROGRAM\n";
-                cout<<" Option > ";
-                cin >> choice;
-                switch (choice)
+            system("clear");
+            cout<< "-------------------- CPU SCHEDULING SIMULATOR-------------------------------"<< endl;
+            cout<<" 1. SCHEDULING METHOD(NONE)\n 2. PREEMPTIVE MODE(ON)\n 3. SHOW RESULT\n 4.END PROGRAM\n";
+            cout<<" Option > ";
+            cin >> choice;
+            switch (choice)
                 {
                     case 1:
                     //  inside_File_in(File_in, File_out);
@@ -218,10 +223,11 @@ int Menu(string choice_str)
                         
                         break;
                     case 2:
-                        Preemptive_Mode(choice_str);
+                        Preemptive_Mode(choice_str,"YES");
                         break;
                     case 3:
-                        Show_Result();
+                        cout <<"<< Please select Scheduling Method first >>"<<endl;
+                        sleep(2);
                         break;
                     case 4:
                         return 0;
@@ -230,7 +236,7 @@ int Menu(string choice_str)
                     default:
                         cout <<"please enter the correct choice !!" << endl;
                         break;
-                }
+            }
 
         }
         while(choice>0 && choice <=4);
@@ -238,14 +244,6 @@ int Menu(string choice_str)
 
 }
 
-struct List_process *Builder(ifstream& inFile, struct List_process *hdr)
-{
-     //2. Process the file
-    hdr =processFile(inFile,hdr);
-    return hdr;
-    
-
-}
 struct List_process *createNode( int Burst, int Arrival , int Priority)
 {
     struct List_process *temp;
@@ -314,22 +312,6 @@ struct List_process *cloneList(struct List_process *head)
 
 }
 
-void Display(struct List_process *header)
-{
-    if(header == NULL)
-        puts("the list is empty");
-    struct List_process *temp= header;
-    while(temp != NULL)
-    {
-        cout <<"Process " << temp->Id << " : " << temp->Burst_time <<":"<<temp->Arrival_time
-             <<":" << temp->Priority ;
-        cout<<"--"<<temp->Waiting_time;
-        cout << " ----" << temp->Turn_around_time<<"     " << temp->is_completed<<endl;
-        temp= temp->next;
-        
-    }
-    puts("");
-}
 void Scheduling_Method(string choice_str)
 {
     int choice;
@@ -337,6 +319,7 @@ void Scheduling_Method(string choice_str)
     {
     do
     {
+        system("clear");
         cout<< "-------------------- Scheduling Method-------------------------------"<< endl;
         cout<<" 1. None: None of scheduling method chosen\n 2. First Come, First Served Scheduling\n "
             << "3. Shortest-Job-First Scheduling\n 4.Priority Scheduling\n 5. Round-Robin Scheduling\n";
@@ -345,6 +328,7 @@ void Scheduling_Method(string choice_str)
         switch (choice)
         {
             case 1:
+                system("clear");
                 char user;
                 cout<<" ----------NO SCHEDULING METHOD WAS CHOOSE-----------"<<endl
                     <<" ******Do you want to go Back to the main Menu(Y/N)*******"<<endl;
@@ -379,8 +363,9 @@ void Scheduling_Method(string choice_str)
     }
     else
     {
+        system("clear");
         do
-    {
+     {
         cout<< "-------------------- Scheduling Method-------------------------------"<< endl;
         cout<<" 1. None: None of scheduling method chosen\n "
             << "2. Shortest-Job-First Scheduling\n 3. Priority Scheduling\n 4. Round-Robin Scheduling\n";
@@ -389,6 +374,7 @@ void Scheduling_Method(string choice_str)
         switch (choice)
         {
             case 1:
+                system("clear");
                 char user;
                 cout<<" ----------NO SCHEDULING METHOD WAS CHOOSE-----------"<<endl
                     <<" ******Do you want to go Back to the main Menu(Y/N)*******"<<endl;
@@ -424,142 +410,303 @@ void Scheduling_Method(string choice_str)
     }
 }
 
-void Preemptive_Mode(string choice_str)
+void Preemptive_Mode(string choice_str, string Main)
 {
+    system("clear");
     int choice;
     cout<<"-------------------------------------------------------------------------------------------------"<<endl;
     cout <<"<< WARNING !!! THE PREEMPITVE MODE WILL AFFECT WILL AFFECT THE SCHEDULING METHOD MENU !!!>>"<<endl;
     cout <<" Enable the Preemptive mode \n \t 1.OFF\n \t 2.ON" <<endl;
     cout<<"Answers > ";
     cin >> choice;
-    switch(choice)
+    if(Main == "YES")
     {
-        case 1:
-            choice_str = "OFF";
-            Menu(choice_str);
-            break;
-        case 2:
-            choice_str ="ON";
-            Menu(choice_str);
-            break;
-        default:
-            cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
-            sleep(5);
-            Preemptive_Mode(choice_str);
-            break;
+        switch(choice)
+        {
+            case 1:
+                choice_str = "OFF";
+                Menu(choice_str);
+                break;
+            case 2:
+                choice_str ="ON";
+                Menu(choice_str);
+                break;
+            default:
+                cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
+                sleep(5);
+                Preemptive_Mode(choice_str,"YES");
+                break;
+        }
+    }   
+    
+    else
+    {
+        if(choice_str == "FCFS")
+        {
+            cout << "<< No preemptive mode for this Scheduling method >>" <<endl;
+        }
+        else if(choice_str == "SJF")
+        {
+             switch(choice)
+            {
+                case 1:
+                    Shortest_jobNP();
+                    break;
+                case 2:
+                    Shortest_jobP();
+                    break;
+                default:
+                    cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
+                    sleep(5);
+                    Preemptive_Mode(choice_str,"NO");
+                    break;
 
+            }
+
+        }
+        else if(choice_str == "RR")
+        {
+            cout<<"<< Round Robin is Preemptive >>" <<endl;
+        }
+        else if(choice_str == "PS")
+        {
+            switch(choice)
+            {
+                case 1:
+                    Priority_schNP();
+                    break;
+                case 2:
+                    Priority_schP();
+                    break;
+                default:
+                    cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
+                    sleep(5);
+                    Preemptive_Mode(choice_str,"NO");
+                    break;
+
+            }
+
+        }
+            
     }
 
 }
 
-void Show_Result()
-{
-    // Read the input file and Write to the output file
 
-  
+
+int Show_Result(struct List_process *h , string S, double avg)
+{
+    int choice;
+    if(S == "FCFS" || S == "SJF" || S =="RR" || S == "PS" )
+    {
+        do
+        {
+            cout<< "-------------------- CPU Scheduler Simlulator -------------------------------"<< endl;
+            cout<<" 1. Scheduling("<<S<<")\n 2. Preemptive Mode\n "
+                << "3. Show Result\n 4. END PROGRAM\n ";
+            cout<<" OPTION > ";
+            cin >> choice;
+            switch (choice)
+            {
+                case 1:
+                    Scheduling_Method("OFF");
+                    break;
+                case 2:
+                    Preemptive_Mode(S,"NO");
+                    break;
+                case 3:
+                    Display(h);
+                    cout<<"The Avarage Waiting is :" << avg <<endl;
+                    break;
+                case 4:
+                    exit(0);
+                    break;
+            
+                default:
+                cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
+                sleep(5);
+                break;
+            }
+        }
+        while(choice>0 && choice <=4);
+    }
 
 }
-
+void Display(struct List_process *header)
+{
+    if(header == NULL)
+        puts("the list is empty");
+    struct List_process *temp= header;
+    cout<<"             "<<"Burst_time\t\t"<<"Arrival_time\t\t"<<"Priority"<<endl;
+    cout<<"--------------------------------------------------------------------------"<<endl;
+    while(temp != NULL)
+    {
+        cout <<"Process " << temp->Id << "\t " << temp->Burst_time <<"\t\t      "<<temp->Arrival_time
+             <<"\t\t\t    " << temp->Priority<<endl ;
+       /* cout<<"--"<<temp->Waiting_time;
+        cout << " ----" << temp->Turn_around_time<<"     " << temp->is_completed<<endl;
+        */
+        temp= temp->next;
+    
+    }
+    puts("");
+}
 
 void First_come()
 {
     struct List_process *headtemp = cloneList(header);
-    struct List_process *temp1 = NULL;
-    struct List_process *temp2 = NULL;
-    
-   // ------------------ we are calculating the waiting time for each process ---------------------// 
-    //the first process the waitting is 0
-    headtemp->Waiting_time = 0;
-    temp1 = headtemp;           // the first node
-    temp2= headtemp->next;     // the next node
-    // waiting time = waiting[i] + burst[i+1]
-    while(temp2!=NULL)
-    {
-        temp2->Waiting_time= temp1->Burst_time + temp1->Waiting_time;
-        temp1= temp1->next;
-        temp2=temp2->next;
-        
-    }
-    //check if the waiting time calculation went well
-  // Display(headtemp);
-//---------------------------------TURN AROUND TIME -----------------------------------------------//
-    struct List_process * T1=NULL;
-    T1 = headtemp;
-    while(T1!=NULL)
-    {
-        T1->Turn_around_time = T1->Waiting_time+T1->Burst_time;
-        T1= T1->next;
-    }
-    //check if the calculation went well
-    //Display(headtemp);
-//----------------------------------- AVERAGE WAITING TIME -----------------------------------//
-    // Average time = Total waitinti time / number of process
-    struct List_process *Final = NULL;
-    Final = headtemp;
-    int counter =0;    // keep track on the number of the process 
-    double Total_waiting=0;
-    double Total_Burst =0;
-    double avg;
-
-    for(int i=0 ; headtemp != NULL ; i++)
-    {
-        Total_waiting += headtemp->Waiting_time;
-        Total_Burst += headtemp-> Burst_time;
-        //headtemp->Id =i++; // the title of the process
-        counter++;
-        headtemp = headtemp->next;
-    }
-   // Display(Final);
-    avg = Total_waiting/counter;
-    cout <<"the average time is : " << avg <<endl;
-
+    mysort_Ar(headtemp,headtemp,headtemp->next);
+    //calculate the Waiting 
+    waiting_time(headtemp);
+    //Turn_around_time
+    Turn_around_time(headtemp);
+    //Average_time
+    Average_time(headtemp,"FCFS");
 }
 void Shortest_jobNP()
 {
     struct List_process *head = cloneList(header);
-    struct List_process *temp1 = head;
-    struct List_process *temp2=NULL;
     //call the sort funtion 
     mysort_Br(head,head,head->next);
 
-    //------------------------------ waiting time calculation -------------------------------- //
-    head->Waiting_time =0;
-    temp2 = head->next;
+    //calculate the Waiting 
+    waiting_time(head);
+    //Turn_around_time
+    Turn_around_time(head);
+    //Average_time
+    Average_time(head,"SJF");
+}
+void Priority_schNP()
+{
+    struct List_process *head = cloneList(header);
+    //sort the linked list according to the priority time 
+    mysort_Pr(head,head,head->next);
+    //calculate the Waiting 
+    waiting_time(head);
+    //Turn_around_time
+    Turn_around_time(head);
+    //Average_time
+    Average_time(head,"PS");
 
-    while(temp2 !=NULL)
+}
+void Round_robin()
+{
+    struct List_process *head = cloneList(header);
+    struct List_process *temp = head;
+    system("clear");
+    Show_Result(head,"RR",0);
+    
+}
+void Shortest_jobP()
+{
+    struct List_process *head = cloneList(header);
+    struct List_process *temp1 = head;
+    struct List_process *swapper =NULL;
+    //call the sort funtion 
+    mysort_Ar(head,head,head->next); // sort according to the arrival time
+    int num = process_counter(head); // store the total amount of the arrival time 
+    int current_time=0, completed=0;
+    int ct_init = 0;
+    
+   // cout <<fixed << setprecision(2);
+    while(completed!=num) // until all the process are completed 
     {
-        temp2->Waiting_time= temp1->Burst_time + temp1->Waiting_time;
-        temp1= temp1->next;
-        temp2=temp2->next;
+        while(temp1!=NULL) 
+        {
+            if( temp1->Arrival_time == ct_init && temp1->is_completed == false)
+            {
+                current_time++;
+                for(int i ; i < num ; i++)
+                {
+                    if(current_time == temp1->next->Arrival_time && temp1->next->is_completed ==  false)
+                    {
+                        if(temp1->Burst_time <= temp1->next->Burst_time)
+                        {
+                            temp1->bt_remaining= temp1->Burst_time --; // decrement the burst time
+                            swapper = temp1->next;
+                            //function to push the next proces (swapper) in the queue
+                            if(temp1->is_first) // if its the first process
+                            {
+                                int wt  = 0;
+                                int tat = temp1->Burst_time - temp1->Arrival_time;
+                            }
+                        }
+                        else
+                        {
+                            swapper = temp1;
+                            // function to push the current process(swapper) to the queue
 
+                        }
+                    }
+                    
+                }
+            }
+            temp1 = temp1->next;
+        }
+        
     }
+
+}
+void Priority_schP()
+{
+    cout <<"you are in the Priority scheduling preemptive"<<endl;
+
+}
+//----------------------------------------Function to calculate the waiting time -------------------------------------//
+int waiting_time(struct List_process *header)
+{
+    //------------------------------------------ Waiting time calculation ---------------------------------------------------------//
+    struct List_process *head = header;
+    struct List_process *temp = NULL;
+    temp = head;
+    head = head->next;
+    head->Waiting_time =0;
+
+    while(head!=NULL)
+    {
+        head->Waiting_time = temp->Burst_time + temp->Waiting_time;
+        head= head->next;
+        temp=temp->next;
+    }
+    return 0;
+
+}
+//----------------------------------------Function to calculate the Turnaround time -----------------------------------//
+int Turn_around_time(struct List_process *header)
+{
     //------------------------------------------- Turn Around Time ------------------------------------------//
-    struct List_process *temp3= head;
+    struct List_process *temp3= header;
     while(temp3!=NULL)
     {
         temp3->Turn_around_time = temp3->Waiting_time + temp3->Burst_time;
         temp3 = temp3->next;
     }
-    //---------------------------------------  Average waiting Time ---------------------------------------//
-    struct List_process *Final=head;
+    return 0;
+
+}
+//--------------------------------------------Funtion to calculate the Average time--------------------------------------//
+void Average_time(struct List_process *header,string Al)
+{
+     //---------------------------------------  Average waiting Time ---------------------------------------//
+    struct List_process *Final=header;
     int counter = 0;
     double Total_waiting=0;
     double Total_burst=0;
     double avg;
-    for(int i=0 ; head!=NULL; i++)
+    for(int i=0 ; header!=NULL; i++)
     {
-        Total_burst += head->Burst_time;
-        Total_waiting +=head->Waiting_time;
+        Total_burst += header->Burst_time;
+        Total_waiting +=(header->Turn_around_time - header->Burst_time);
         counter ++;
-        head= head->next;
+        header= header->next;
     }
-    Display(Final);
     avg = Total_waiting/counter;
-    cout <<"The average Waiting time is : "<< avg <<endl;
-      
-    cout<<" you are in the shortest job" << endl;
+    system("clear");
+    Show_Result(Final,Al,avg);
+
 }
-//----------------------------------- function to sort accorging to a burst time------------------------------------//
+
+//------------------------------------Function to sort accorging to a burst time------------------------------------//
 void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -586,7 +733,7 @@ void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_pr
     }
     mysort_Br(head,temp,ht->next);
 }
-//*-------------function to sort the Priority scheduling -------------------------------------------
+//-----------------------------------Function to sort the Priority scheduling -------------------------------------------
 void mysort_Pr(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -612,8 +759,7 @@ void mysort_Pr(struct List_process *&head,struct List_process *ht,struct List_pr
     }
     mysort_Pr(head,temp,ht->next);
 }
-
-//------------------------------- Funtion to sort according to the Arrival Time -----------------------------------------//
+//-----------------------------------Funtion to sort according to the Arrival Time -----------------------------------------//
 void mysort_Ar(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
     if(temp==NULL)
@@ -654,52 +800,7 @@ void mysort_Ar(struct List_process *&head,struct List_process *ht,struct List_pr
     mysort_Ar(head,temp,ht->next);
 
 }
-
-void Priority_schNP()
-{
-    struct List_process *head = cloneList(header);
-    struct List_process *temp = head;
-    struct List_process *temp2= head->next;
-
-    //-------------------------------- sort the linked list according to the priority time --------------------------------//
-    mysort_Pr(head,temp,temp2);
-    //--------------------------------- Waiting time calculation ---------------------------------------------------------//
-     head->Waiting_time =0;
-
-    while(temp2 !=NULL)
-    {
-        temp2->Waiting_time= temp->Burst_time + temp->Waiting_time;
-        temp= temp->next;
-        temp2=temp2->next;
-
-    }
-    //------------------------------------------- Turn Around Time ------------------------------------------//
-    struct List_process *temp3= head;
-    while(temp3!=NULL)
-    {
-        temp3->Turn_around_time = temp3->Waiting_time + temp3->Burst_time;
-        temp3 = temp3->next;
-    }
-    //---------------------------------------  Average waiting Time ---------------------------------------//
-    struct List_process *Final=head;
-    int counter = 0;
-    double Total_waiting=0;
-    double Total_burst=0;
-    double avg;
-    for(int i=0 ; head!=NULL; i++)
-    {
-        Total_burst += head->Burst_time;
-        Total_waiting +=head->Waiting_time;
-        counter ++;
-        head= head->next;
-    }
-    Display(Final);
-    avg = Total_waiting/counter;
-    cout <<"The average Waiting time is : "<< avg <<endl;
-
-    cout <<" you are in the Priority job " << endl;
-}
-//-------------------------------- Count the number of element in the Linked List -----------------------------------------//
+//-----------------------------------Count the number of element in the Linked List -----------------------------------------//
 int process_counter(struct List_process *header)
 {
 	struct List_process *temp = header;
@@ -713,64 +814,5 @@ int process_counter(struct List_process *header)
 	return counter;
 }
 
-void Round_robin()
-{
-    cout <<"You are in the round robin " <<endl;
-}
 
-void Shortest_jobP()
-{
-    struct List_process *head = cloneList(header);
-    struct List_process *temp1 = head;
-    struct List_process *swapper =NULL:
-    //call the sort funtion 
-    mysort_Ar(head,head,head->next); // sort according to the arrival time
-    int num = process_counter(head); // store the total amount of the arrival time 
-    int current_time=0, completed=0;
-    int ct_init = 0;
-    
-    cout <<fixed << setprecision(2);
-    while(completed!=num) // until all the process are completed 
-    {
-        while(temp1!=NULL) 
-        {
-            if( temp1->Arrival_time == ct_init && temp1->is_completed == false)
-            {
-                current_time++;
-                for(int i ; i < num ; i++)
-                {
-                    if(current_time == temp1->next->Arrival_time && temp1->next->is_completed ==  false)
-                    {
-                        if(temp1->Burst_time <= temp1->next->Burst_time)
-                        {
-                            temp1->bt_remaining= temp1->Burst_time --; // decrement the burst time
-                            swapper = temp1->next;
-                            //function to push the next proces (swapper) in the queue
-                            if(temp1->is_first) // if its the first process
-                            {
-                                int wt  = 0;
-                                int tat = temp1->Burst_time - temp1->Arrival_time;
-                            }
-                        }
-                        else()
-                        {
-                            swapper = temp1;
-                            // function to push the current process(swapper) to the queue
 
-                        }
-                    }
-                    
-                }
-            }
-            temp1 = temp->next;
-        }
-        
-    }
-
-}
-
-void Priority_schP()
-{
-    cout <<"you are in the Priority scheduling preemptive"<<endl;
-
-}
