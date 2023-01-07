@@ -89,38 +89,87 @@ void openFile(ifstream& inFile , char *fname)
 }
 struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // read the file and take the data fills up the linked list
 {
-   
-    string line;
-    char word[size];
-    int Burst, Arrival , Priority;
-    istringstream iss;   // process the string 
-    if(inFile.good())   // check if the process of getline was sucessfull
-    while(!inFile.eof())
-    {
-        ///read line by line
-        getline(inFile,line);
-        //cout <<line <<endl;
+    string line;  // Buffer for storing a line of the file
+    char word[size];  // Buffer for storing a word from the file
+    int Burst, Arrival, Priority;  // Variables for storing the values
+    istringstream iss;  // Stream for processing the string
 
-        //read word by word form the line
-         iss.clear(); // clear out the state
-         iss.str(line);
-         while(iss.good())
-         {
-            iss >> word ;
-           // cout << word << endl;
-           // read char by char from the word
-        
-           for( int i =0 ; i< strlen(word);i++)
-           { 
-                   // cout << word[i] << endl;
-                    Burst = atoi(strtok(word, ":"));        //stores digits bfr the ':'
-                    Arrival= atoi(strtok(NULL, ":"));       //stores digits bfr the ':' starting at the point it left off
-                    Priority = atoi(strtok(NULL, "\n"));
-                    hdr = insertBack(hdr,Burst,Arrival,Priority);
-           }
-         }
-        
+    if (inFile.good())  // Check if the file was opened successfully
+    {
+        while (!inFile.eof())  // Read until the end of the file
+        {
+            // Read a line from the file
+            getline(inFile, line);
+            cout<<line<<endl;
+
+            // Clear the stream and assign the line to it
+            iss.clear();
+            iss.str(line);
+
+            // Clear the stream and assign the line to it
+            iss.clear();
+            iss.str(line);
+
+            // Initialize the variables to 0
+            Burst = 0;
+            Arrival = 0;
+            Priority = 0;
+
+            // Read the characters of the first column until the ':' character
+            int i = 0;
+            while (line[i] != ':' && line[i] != '\0')
+            {
+                word[i] = line[i];
+                i++;
+            }
+            word[i] = '\0';  // Null terminate the string
+
+            // If the ':' character was found, convert the first column to an integer
+            if (line[i] == ':')
+            {
+                Burst = atoi(word);  // Convert the string to an integer
+            }
+
+            // Advance the counter past the ':' character
+            i++;
+
+            // Read the characters of the second column until the ':' character
+            int j = 0;
+            while (line[i] != ':' && line[i] != '\0')
+            {
+                word[j] = line[i];
+                i++;
+                j++;
+            }
+            word[j] = '\0';  // Null terminate the string
+
+            // If the ':' character was found, convert the second column to an integer
+            if (line[i] == ':')
+            {
+                Arrival = atoi(word);  // Convert the string to an integer
+            }
+
+            // Advance the counter past the ':' character
+            i++;
+
+            // Read the characters of the third column until the end of the line
+            j = 0;
+            while (line[i] != '\0')
+            {
+                word[j] = line[i];
+                i++;
+                j++;
+            }
+            word[j] = '\0';  // Null terminate the string
+
+            // Convert the third column to an integer
+            Priority = atoi(word);
+
+            // Insert the values into the linked list
+            hdr = insertBack(hdr, Burst, Arrival, Priority);
+        }
     }
+    
     return hdr;
 
 }
@@ -155,9 +204,9 @@ int main(int argc , char *argv[])
     openFile(inFile, File_in);
     header = processFile(inFile,header);
     //check if the linked list was successsfully create
-    //Display(header);
+    Display(header);
     //call the function of prompting first the Menu on the screen
-    Menu(choice_str);
+   // Menu(choice_str);
    // head = cloneList(header);
     //check if we sucessfully create copy a linked with the data inside
    // Display(head);
