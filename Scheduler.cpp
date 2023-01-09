@@ -100,21 +100,16 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // 
         {
             // Read a line from the file
             getline(inFile, line);
-            cout<<line<<endl;
-
             // Clear the stream and assign the line to it
             iss.clear();
             iss.str(line);
-
             // Clear the stream and assign the line to it
             iss.clear();
             iss.str(line);
-
             // Initialize the variables to 0
             Burst = 0;
             Arrival = 0;
             Priority = 0;
-
             // Read the characters of the first column until the ':' character
             int i = 0;
             while (line[i] != ':' && line[i] != '\0')
@@ -123,16 +118,13 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // 
                 i++;
             }
             word[i] = '\0';  // Null terminate the string
-
             // If the ':' character was found, convert the first column to an integer
             if (line[i] == ':')
             {
                 Burst = atoi(word);  // Convert the string to an integer
             }
-
             // Advance the counter past the ':' character
             i++;
-
             // Read the characters of the second column until the ':' character
             int j = 0;
             while (line[i] != ':' && line[i] != '\0')
@@ -142,16 +134,13 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // 
                 j++;
             }
             word[j] = '\0';  // Null terminate the string
-
             // If the ':' character was found, convert the second column to an integer
             if (line[i] == ':')
             {
                 Arrival = atoi(word);  // Convert the string to an integer
             }
-
             // Advance the counter past the ':' character
             i++;
-
             // Read the characters of the third column until the end of the line
             j = 0;
             while (line[i] != '\0')
@@ -161,10 +150,8 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // 
                 j++;
             }
             word[j] = '\0';  // Null terminate the string
-
             // Convert the third column to an integer
             Priority = atoi(word);
-
             // Insert the values into the linked list
             hdr = insertBack(hdr, Burst, Arrival, Priority);
         }
@@ -204,9 +191,9 @@ int main(int argc , char *argv[])
     openFile(inFile, File_in);
     header = processFile(inFile,header);
     //check if the linked list was successsfully create
-    Display(header);
+    //Display(header);
     //call the function of prompting first the Menu on the screen
-   // Menu(choice_str);
+    Menu(choice_str);
    // head = cloneList(header);
     //check if we sucessfully create copy a linked with the data inside
    // Display(head);
@@ -591,7 +578,7 @@ void Display(struct List_process *header)
     while(temp != NULL)
     {
         cout <<"Process " << temp->Id << "\t " << temp->Burst_time <<"\t\t      "<<temp->Arrival_time
-             <<"\t\t\t    " << temp->Priority<<endl ;
+             <<"\t\t\t   " << temp->Priority<<endl ;
        /* cout<<"--"<<temp->Waiting_time;
         cout << " ----" << temp->Turn_around_time<<"     " << temp->is_completed<<endl;
         */
@@ -648,52 +635,73 @@ void Round_robin()
 }
 void Shortest_jobP()
 {
+    cout<<"You are in the Preemptive Mode for the SJF"<<endl;
     struct List_process *head = cloneList(header);
-    struct List_process *temp1 = head;
-    struct List_process *swapper =NULL;
-    //call the sort funtion 
-    mysort_Ar(head,head,head->next); // sort according to the arrival time
-    int num = process_counter(head); // store the total amount of the arrival time 
-    int current_time=0, completed=0;
-    int ct_init = 0;
-    
-   // cout <<fixed << setprecision(2);
-    while(completed!=num) // until all the process are completed 
-    {
-        while(temp1!=NULL) 
-        {
-            if( temp1->Arrival_time == ct_init && temp1->is_completed == false)
-            {
-                current_time++;
-                for(int i ; i < num ; i++)
-                {
-                    if(current_time == temp1->next->Arrival_time && temp1->next->is_completed ==  false)
-                    {
-                        if(temp1->Burst_time <= temp1->next->Burst_time)
-                        {
-                            temp1->bt_remaining= temp1->Burst_time --; // decrement the burst time
-                            swapper = temp1->next;
-                            //function to push the next proces (swapper) in the queue
-                            if(temp1->is_first) // if its the first process
-                            {
-                                int wt  = 0;
-                                int tat = temp1->Burst_time - temp1->Arrival_time;
-                            }
-                        }
-                        else
-                        {
-                            swapper = temp1;
-                            // function to push the current process(swapper) to the queue
+    // Initialize the current time to the earliest arrival time of any process
+    mysort_Ar(head,head,head->next);
+    int current_time = head->Arrival_time;
 
-                        }
-                    }
-                    
-                }
-            }
-            temp1 = temp1->next;
+    // Initialize the total waiting time and turnaround time to 0
+    double total_waiting_time = 0.0;
+    double total_turnaround_time = 0.0;
+
+    // Initialize a pointer to the head of the linked list
+    struct List_process *p = head;
+    // While there are still processes remaining to be completed
+    while (p != NULL) {
+        // Select the process with the shortest burst time from the list of processes that have arrived
+        struct List_process* selected = NULL;
+        int shortest_burst_time = INT_MAX;
+        struct List_process *q = head;
+        while (q != NULL) {
+        if (q->Arrival_time <= current_time && q->Burst_time < shortest_burst_time) {
+            selected = q;
+            shortest_burst_time = q->Burst_time;
         }
-        
+        q = q->next;
+        }
+
+        // Calculate the waiting time and turnaround time for the selected process
+        selected->Waiting_time = current_time - selected->Burst_time ;
+        selected->Turn_around_time = current_time - selected->Arrival_time;
+
+        // Update the current time to the completion time of the selected process
+        current_time += selected->Burst_time;
+
+        // Add the waiting time and turnaround time of the selected process to the total
+        total_waiting_time += selected->Waiting_time;
+        total_turnaround_time += selected->Turn_around_time;
+
+        // Remove the selected process from the linked list
+        if (selected == head) 
+        {
+            head = head->next;
+        } 
+        else 
+        {
+        struct List_process* prev = head;
+        while (prev->next != selected) 
+        {
+            prev = prev->next;
+        }
+        prev->next = selected->next;
+        }
+        delete selected;
+
+        // Update the pointer to the head of the linked list
+        p = head;
     }
+
+    // Calculate the average waiting time and average turnaround time
+    // Calculate the average waiting time and average turnaround time
+    double num_processes = process_counter(header);  // number of processes in the linked list
+    double average_waiting_time = total_waiting_time / num_processes;
+    double average_turnaround_time = total_turnaround_time / num_processes;
+
+    // Print the results
+    std::cout << "Average waiting time: " << average_waiting_time << std::endl;
+    std::cout << "Average turnaround time: " << average_turnaround_time << std::endl;
+
 
 }
 void Priority_schP()
