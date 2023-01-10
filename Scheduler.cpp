@@ -9,10 +9,10 @@
 #include <climits>
 #define  size  1024  
 #define TRUE 1
-#define FALSE 0       //string input data size
+#define FALSE 0       
 
 using namespace std;
-
+//----------------------------------------- Structure using to keep values when working with Preemptive -----------------------//
 struct _process
 {
     int id;
@@ -35,18 +35,16 @@ void Round_robin();
 
 //----------------------- prototypes of all the define function used --------------------------------// 
 int Menu(string );   // Prompt the menu to the user on the screen
-void Second_Menu(string);
 void Scheduling_Method(string);
 void Preemptive_Mode(string,string);
 int Show_Result(struct List_process * , string, double);
 void show_resultP(struct List_process *, string);
 int process_counter(struct List_process *);
-//void process_init(struct _process *,struct List_process *);
 
 //------------------------------------- link list prototypes ---------------------------------------//
 struct List_process *createNode(int , int , int );
 struct List_process *insertBack(struct List_process *, int, int,int);
-void Display(struct  List_process *);
+void Display(struct  List_process *, char *);
 struct List_process *cloneList(struct List_process *);       
 
 //----------------------------................ FCFS Algorithm --------------------------------------------------//
@@ -84,13 +82,13 @@ int counter;          // getopt variable holder
 char *File_in;      //store the input file
 char *File_out;    // store the ouput file
 struct List_process *header=NULL;     //original linked list root
-
 int num = 0;  // keep track on the Id number of new created process node
 
-//---------------------------- function to open the input input ----------------------------------//
+//---------------------------- function to open the input file-----------------------------------------------------------//
 void openFile(ifstream& inFile , char *fname)
 {
-    inFile.open(fname);
+    inFile.open(fname); // open the file
+    // check if the file was opened 
     if(inFile.is_open())
     {
         cout << "successfully opened file" << endl;
@@ -102,6 +100,7 @@ void openFile(ifstream& inFile , char *fname)
     }
 
 }
+//----------------------------- Function for filling the list with input text values ------------------------------------//
 struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // read the file and take the data fills up the linked list
 {
     string line;  // Buffer for storing a line of the file
@@ -205,7 +204,7 @@ void process_init(struct List_process *ht)
     }*/
 
 }
-
+//------------------------------------------- Main Function -------------------------------------------------------------------------//
 int main(int argc , char *argv[])
 {
     // make sure the number of arguments given by the user is not less than 4
@@ -244,13 +243,11 @@ int main(int argc , char *argv[])
     //check if we sucessfully create copy a linked with the data inside
    // Display(head);
     inFile.close();
-   
-
-
 
     return 0;
 
 }
+
 int Menu(string choice_str)
 {
     int choice;
@@ -600,8 +597,9 @@ void show_resultP(struct List_process *h , string S)
                     puts(" ");
                     cout <<"\t   "<< h->mode << endl;
                     puts(" ");
-                    Display(h);
+                    Display(h,File_out);
                     cout<<"The Avarage Waiting is :" << h->Avg_wt<<endl;
+                    cout<<"<< Output file updated >>" <<endl;
                     break;
                 case 4:
                     exit(0);
@@ -615,7 +613,6 @@ void show_resultP(struct List_process *h , string S)
         }
         while(choice>0 && choice <=4);
     }
-
     
 }
 int Show_Result(struct List_process *h , string S, double avg)
@@ -643,8 +640,9 @@ int Show_Result(struct List_process *h , string S, double avg)
                     puts(" ");
                     cout <<"\t   "<< h->mode << endl;
                     puts(" ");
-                    Display(h);
+                    Display(h,File_out);
                     cout<<"The Avarage Waiting is :" << avg <<endl;
+                    cout<<"<< Output file updated >>" <<endl;
                     break;
                 case 4:
                     exit(0);
@@ -660,7 +658,7 @@ int Show_Result(struct List_process *h , string S, double avg)
     }
 
 }
-void Display(struct List_process *header)
+void Display(struct List_process *header, char *opt)
 {
     if(header == NULL)
         puts("the list is empty");
@@ -677,6 +675,30 @@ void Display(struct List_process *header)
         temp= temp->next;
     
     }
+
+    ofstream outFile;
+    outFile.open(opt);
+    if(outFile.is_open())
+    {
+        outFile<<"Scheduling Method: " << header->mode<<"\n\n";
+        outFile <<"             "<<"Burst_time\t\t"<<"Arrival_time\t\t"<<"Priority\t\t"<<"Waiting_Time\n";
+        outFile <<"---------------------------------------------------------------------------------------------------------"<<endl;
+        while(header != NULL)
+        {
+            outFile <<"Process " << header->Id << "\t " << header->Burst_time <<"\t\t      "<<header->Arrival_time
+                    <<"\t\t\t   " << header->Priority<<"\t\t\t\t"<<header->Waiting_time<<"\n";
+            outFile<<"__________|________________|____________________|_______________________|___________________________|"<<endl;    
+            
+            header= header->next;
+               
+        } 
+    }
+    else
+    {
+        cout <<"Failed to open file" <<endl;
+        exit(-1);
+    }
+    outFile.close(); 
     puts("");
 }
 
@@ -859,7 +881,6 @@ int Turn_around_time(struct List_process *header)
     return 0;
 
 }
-
 //--------------------------------------------Function to calculate the Average time--------------------------------------//
 void Average_time(struct List_process *header,string Al)
 {
@@ -1218,3 +1239,4 @@ int process_counter(struct List_process *header)
 	}
 	return Arr;
 }
+
