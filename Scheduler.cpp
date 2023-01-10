@@ -48,9 +48,7 @@ struct List_process *createNode(int , int , int );
 struct List_process *insertBack(struct List_process *, int, int,int);
 void Display(struct  List_process *);
 struct List_process *cloneList(struct List_process *);       
-struct List_process *Merge_sort(struct List_process *);
-struct List_process *merge(struct List_process *, struct List_process *);
-struct List_process *mid_point(struct List_process *);
+
 //----------------------------................ FCFS Algorithm --------------------------------------------------//
 int waiting_time(struct List_process *);
 int Turn_around_time(struct List_process *);
@@ -60,6 +58,8 @@ void mysort_Br(struct List_process *&,struct List_process *,struct List_process 
 void mysort_Pr(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to Priority
 void mysort_Ar(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to the Arrival time
 
+void Time_calP(struct List_process *);
+void Time_cal(struct List_process *);
 //----------------------- Definition of the linked list ----------------------------------------//
 struct List_process
 {
@@ -174,90 +174,6 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // 
     return hdr;
 
 }
-
-void Time_cal(struct List_process *header)
-{
-    int current_time =0;  // variable to store the current time 
-    int total_burst_time =0;    // variable to store the total execution time
-    int shortes_remain_time ;   // variable to store the index with minimal work
-    int len = process_counter(header); // store the number of element in  the linked list
-    int k =0;       // variable store the currently running process number
-    // dynamically allocate an array to store the remaining execution time for each process
-    int *remain_burst_time = (int *)malloc(sizeof(int)*len);
-    // dynamically allocate an array to be used to check the response time
-    int *count = (int *)malloc(sizeof(int)*len);
-    // repeat untill we reach the last process
-    for(int i = 0; i <len ; i++)
-    {
-        // initialization of a count array and the remain_burst_time array
-        count[i]=0;
-        remain_burst_time[i] = p[i].burst;
-        total_burst_time+= p[i].burst; // calculate  the total burst time by sum up all burst of each process
-    }
-
-    while(current_time < total_burst_time)
-    {
-        shortes_remain_time = INT_MAX;
-        // if the current_time is less than the arrival time of the last process entered
-        if(current_time <= p[len-1].arrival_time)
-        {
-            for(int i = 0 ; i<len ; i++)
-            {
-                if((p[i].completed == FALSE) && (p[i].arrival_time <= current_time)&&(shortes_remain_time > remain_burst_time[i]))
-                {
-                    //update the minimum work time
-                    shortes_remain_time = remain_burst_time[i];
-                    k=i; // update minimum working process index
-                }
-            }
-        }
-        else        // when there is no more a new process coming in
-        {
-            for(int i=0 ; i<len ; i++)
-            {
-                if((p[i].completed == FALSE)&&(shortes_remain_time > remain_burst_time[i]))
-                {
-                    shortes_remain_time = remain_burst_time[i];
-                    k=i;
-                }
-            }
-        }
-        if(count[k] == 0) // when the selected process starts for the first time
-        {
-            count[k]++; // indicate that is not the initial run
-            p[k].response_time = current_time; // save the response time of the running process
-        }
-        remain_burst_time[k]--; // decrease the remaining time of the executed process
-        current_time ++;           // increment the current time
-// When the remaing execution time of the process become 0
-        if(remain_burst_time[k] ==0)
-        {
-            p[k].completed = TRUE;   // change the done state
-            // calculate the waiting_time
-            p[k].waiting_time = current_time - p[k].burst - p[k].arrival_time;
-            // calculte the return time
-            p[k].return_time = current_time;
-        }
-    }
-
-    //back up all the values of the waiting time in the linked list 
-    for(int i=0 ; i<len ; i++)
-    {
-        header->Waiting_time = p[i].waiting_time;
-        header= header->next;
-    }
-   /* check
-    cout<<p[0].waiting_time<<endl;
-    cout<<p[1].waiting_time<<endl;
-    cout<<p[2].waiting_time<<endl;*/
-    
-
-    
-    //deallocate memory for dynamically allocates arrays
-    free(count);
-    free(remain_burst_time);
-
-}
 void process_init(struct List_process *ht)
 {
     int i=0;
@@ -288,6 +204,7 @@ void process_init(struct List_process *ht)
     }*/
 
 }
+
 int main(int argc , char *argv[])
 {
     // make sure the number of arguments given by the user is not less than 4
@@ -847,7 +764,36 @@ void Shortest_jobP(struct _process *p)
 }
 void Priority_schP()
 {
-    //"<<You are in Priority_Scheduling in Preemptive Mode >>"
+    struct List_process *head = cloneList(header);
+    head->mode = "<<You are in Priority_Scheduling (Preemptive Mode) >>" ;
+    // Initialize the current time to the earliest arrival time of any process
+    mysort_Pr(head,head,head->next);
+    int total_waiting_time =0;
+    int total_turnaround_time =0;
+    int total_response_time =0;
+
+    int len = process_counter(head);
+
+    process_init(head);
+
+    Time_calP(head);
+
+    for(int i=0 ; i<len ; i++)
+    {
+        p[i].turnaround_time = p[i].return_time -p[i].arrival_time;
+
+        total_waiting_time += p[i].waiting_time;
+
+        total_turnaround_time += p[i].turnaround_time;
+
+        total_response_time += p[i].response_time; 
+    }
+    
+    // store the average waiting time and the turnaround time in the linked list
+    head->Avg_wt = (double)total_waiting_time/(double)len;
+    head->Turn_around_time = (double)total_turnaround_time/(double)len;
+
+    show_resultP(head,"PS");
     
 
 }
@@ -904,7 +850,174 @@ void Average_time(struct List_process *header,string Al)
     Show_Result(Final,Al,avg);
 
 }
+//-------------------------------------- Funtion to calculate the waiting and turnaround time for SJF preemptive -----------------------------//
+void Time_cal(struct List_process *header)
+{
+    int current_time =0;  // variable to store the current time 
+    int total_burst_time =0;    // variable to store the total execution time
+    int shortest_remain_time ;   // variable to store the index with minimal work
+    int len = process_counter(header); // store the number of element in  the linked list
+    int k =0;       // variable store the currently running process number
+    // dynamically allocate an array to store the remaining execution time for each process
+    int *remain_burst_time = (int *)malloc(sizeof(int)*len);
+    // dynamically allocate an array to be used to check the response time
+    int *count = (int *)malloc(sizeof(int)*len);
+    // repeat untill we reach the last process
+    for(int i = 0; i <len ; i++)
+    {
+        // initialization of a count array and the remain_burst_time array
+        count[i]=0;
+        remain_burst_time[i] = p[i].burst;
+        total_burst_time+= p[i].burst; // calculate  the total burst time by sum up all burst of each process
+    }
 
+    while(current_time < total_burst_time)
+    {
+        shortest_remain_time = INT_MAX;
+        // if the current_time is less than the arrival time of the last process entered
+        if(current_time <= p[len-1].arrival_time)
+        {
+            for(int i = 0 ; i<len ; i++)
+            {
+                if((p[i].completed == FALSE) && (p[i].arrival_time <= current_time)&&(shortest_remain_time > remain_burst_time[i]))
+                {
+                    //update the minimum work time
+                    shortest_remain_time = remain_burst_time[i];
+                    k=i; // update minimum working process index
+                }
+            }
+        }
+        else        // when there is no more a new process coming in
+        {
+            for(int i=0 ; i<len ; i++)
+            {
+                if((p[i].completed == FALSE)&&(shortest_remain_time > remain_burst_time[i]))
+                {
+                    shortest_remain_time = remain_burst_time[i];
+                    k=i;
+                }
+            }
+        }
+        if(count[k] == 0) // when the selected process starts for the first time
+        {
+            count[k]++; // indicate that is not the initial run
+            p[k].response_time = current_time; // save the response time of the running process
+        }
+        remain_burst_time[k]--; // decrease the remaining time of the executed process
+        current_time ++;           // increment the current time
+// When the remaing execution time of the process become 0
+        if(remain_burst_time[k] ==0)
+        {
+            p[k].completed = TRUE;   // change the done state
+            // calculate the waiting_time
+            p[k].waiting_time = current_time - p[k].burst - p[k].arrival_time;
+            // calculte the return time
+            p[k].return_time = current_time;
+        }
+    }
+
+    //back up all the values of the waiting time in the linked list 
+    for(int i=0 ; i<len ; i++)
+    {
+        header->Waiting_time = p[i].waiting_time;
+        header= header->next;
+    }
+   /* check
+    cout<<p[0].waiting_time<<endl;
+    cout<<p[1].waiting_time<<endl;
+    cout<<p[2].waiting_time<<endl;*/
+    
+
+    
+    //deallocate memory for dynamically allocates arrays
+    free(count);
+    free(remain_burst_time);
+
+}
+//----------------------------------------- Funtion to calculate the waiting and turnaround time for Priority Preemptive -------------------------//
+void Time_calP(struct List_process *header)
+{
+    int current_time =0;  // variable to store the current time 
+    int total_burst_time =0;    // variable to store the total execution time
+    int Priority ;   // variable to store the index with minimal priority
+    int len = process_counter(header); // store the number of element in  the linked list
+    int k =0;       // variable store the currently running process number
+    // dynamically allocate an array to store the remaining execution time for each process
+    int *remain_burst_time = (int *)malloc(sizeof(int)*len);
+    // dynamically allocate an array to be used to check the response time
+    int *count = (int *)malloc(sizeof(int)*len);
+    // repeat untill we reach the last process
+    for(int i = 0; i <len ; i++)
+    {
+        // initialization of a count array and the remain_burst_time array
+        count[i]=0;
+        remain_burst_time[i] = p[i].burst;
+        total_burst_time+= p[i].burst; // calculate  the total burst time by sum up all burst of each process
+    }
+
+    while(current_time < total_burst_time)
+    {
+        Priority = INT_MAX;
+        // if the current_time is less than the arrival time of the last process entered
+        if(current_time <= p[len-1].arrival_time)
+        {
+            for(int i = 0 ; i<len ; i++)
+            {
+                if((p[i].completed == FALSE) && (p[i].arrival_time <= current_time)&&(Priority > remain_burst_time[i]))
+                {
+                    //update the minimum work time
+                    Priority = p[i].priority;
+                    k=i; // update minimum working process index
+                }
+            }
+        }
+        else        // when there is no more a new process coming in
+        {
+            for(int i=0 ; i<len ; i++)
+            {
+                if((p[i].completed == FALSE)&&(Priority > p[i].priority))
+                {
+                    Priority = p[i].priority;
+                    k=i;
+                }
+            }
+        }
+        if(count[k] == 0) // when the selected process starts for the first time
+        {
+            count[k]++; // indicate that is not the initial run
+            p[k].response_time = current_time; // save the response time of the running process
+        }
+        remain_burst_time[k]--; // decrease the remaining time of the executed process
+        current_time ++;           // increment the current time
+// When the remaing execution time of the process become 0
+        if(remain_burst_time[k] ==0)
+        {
+            p[k].completed = TRUE;   // change the done state
+            // calculate the waiting_time
+            p[k].waiting_time = current_time - p[k].burst - p[k].arrival_time;
+            // calculte the return time
+            p[k].return_time = current_time;
+        }
+    }
+
+    //back up all the values of the waiting time in the linked list 
+    for(int i=0 ; i<len ; i++)
+    {
+        header->Waiting_time = p[i].waiting_time;
+        header= header->next;
+    }
+   /* check
+    cout<<p[0].waiting_time<<endl;
+    cout<<p[1].waiting_time<<endl;
+    cout<<p[2].waiting_time<<endl;*/
+    
+
+    
+    //deallocate memory for dynamically allocates arrays
+    free(count);
+    free(remain_burst_time);
+
+}
 //------------------------------------Function to sort accorging to a burst time------------------------------------//
 void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_process *temp)
 {
