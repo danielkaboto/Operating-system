@@ -57,10 +57,11 @@ void Average_time(struct List_process *, string);
 void mysort_Br(struct List_process *&,struct List_process *,struct List_process *); //sorting according to burst time
 void mysort_Pr(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to Priority
 void mysort_Ar(struct List_process *&,struct List_process *,struct List_process *);  // sorting according to the Arrival time
-
+//--------------------------------------------Prototypes function Waiting time for SJF , PR, RR for Preemptive mode -------------// 
 void Time_calP(struct List_process *);
 void Time_cal(struct List_process *);
-//----------------------- Definition of the linked list ----------------------------------------//
+void Time_calR(struct List_process *, int);
+//--------------------------------------------- Definition of the linked list ----------------------------------------//
 struct List_process
 {
     int Id;     // store the ID of a process
@@ -76,7 +77,7 @@ struct List_process
 
 };
 
-// ----------------------- Variable definition and Declaration --------------------------------------//
+// ------------------------------------------- Variable definition and Declaration --------------------------------------//
 static int choice;
 static string choice_str ="OFF";
 int counter;          // getopt variable holder
@@ -670,9 +671,9 @@ void Display(struct List_process *header)
     {
         cout <<"Process " << temp->Id << "\t " << temp->Burst_time <<"\t\t      "<<temp->Arrival_time
              <<"\t\t\t   " << temp->Priority<<endl ;
-       /* cout<<"--"<<temp->Waiting_time;
-        cout << " ----" << temp->Turn_around_time<<"     " << temp->is_completed<<endl;
-        */
+        cout<<"--"<<temp->Waiting_time;
+        cout << " ----" << temp->Turn_around_time<<endl;
+        
         temp= temp->next;
     
     }
@@ -721,10 +722,39 @@ void Priority_schNP()
 }
 void Round_robin()
 {
+    int quantum;
     struct List_process *head = cloneList(header);
-    struct List_process *temp = head;
-    system("clear");
-    Show_Result(head,"RR",0);
+    head->mode = "<<You are in Shortest_Job_Scheduling in Preemptive Mode >>" ;
+    cout<<"Please enter Quantum >";
+    cin >> quantum;
+   
+    mysort_Ar(head,head,head->next);
+    int total_waiting_time =0;
+    int total_turnaround_time =0;
+    int total_response_time =0;
+
+    int len = process_counter(head);
+
+    process_init(head);
+
+    Time_calR(head,quantum);
+
+
+    for(int i=0 ; i<len ; i++)
+    {
+        total_waiting_time +=p[i].waiting_time;
+
+        total_turnaround_time += p[i].turnaround_time;
+
+        total_response_time += p[i].response_time; 
+
+    }
+    Display(head);
+    // store the average waiting time and the turnaround time in the linked list
+    head->Avg_wt = (double)total_waiting_time/(double)len;
+    head->Avg_tat = (double)total_turnaround_time/(double)len;
+    sleep(5);
+    show_resultP(head,"RR");
     
 }
 void Shortest_jobP(struct _process *p)
@@ -829,7 +859,8 @@ int Turn_around_time(struct List_process *header)
     return 0;
 
 }
-//--------------------------------------------Funtion to calculate the Average time--------------------------------------//
+
+//--------------------------------------------Function to calculate the Average time--------------------------------------//
 void Average_time(struct List_process *header,string Al)
 {
      //---------------------------------------  Average waiting Time ---------------------------------------//
@@ -850,7 +881,7 @@ void Average_time(struct List_process *header,string Al)
     Show_Result(Final,Al,avg);
 
 }
-//-------------------------------------- Funtion to calculate the waiting and turnaround time for SJF preemptive -----------------------------//
+//-------------------------------------- Function to calculate the waiting and turnaround time for SJF preemptive -----------------------------//
 void Time_cal(struct List_process *header)
 {
     int current_time =0;  // variable to store the current time 
@@ -934,7 +965,7 @@ void Time_cal(struct List_process *header)
     free(remain_burst_time);
 
 }
-//----------------------------------------- Funtion to calculate the waiting and turnaround time for Priority Preemptive -------------------------//
+//----------------------------------------- Function to calculate the waiting and turnaround time for Priority Preemptive -------------------------//
 void Time_calP(struct List_process *header)
 {
     int current_time =0;  // variable to store the current time 
@@ -1017,6 +1048,69 @@ void Time_calP(struct List_process *header)
     free(count);
     free(remain_burst_time);
 
+}
+//----------------------------------------- Function to calculate the waiting and turnaround time for Round Robin ------------------//
+void Time_calR(struct List_process *header, int quantum)
+{
+    int lsize = process_counter(header);    // store number of element in the list
+    int current_time = 0;
+    int *remain_burst_time =(int *)malloc(sizeof(int)*lsize);
+    int *resp_time = (int *)malloc(sizeof(int)*lsize);
+
+    for(int i = 0; i<lsize; i++)
+    {
+        remain_burst_time[i] = p[i].burst;
+        resp_time[i] = FALSE;
+    }
+
+    while(TRUE)
+    {
+        int check = TRUE;
+        for(int i=0 ; i<lsize;i++)
+        {
+            if(remain_burst_time[i]>0)
+            {
+                check = FALSE;
+                if(resp_time[i] == FALSE)
+                {
+                    p[i].response_time = current_time - p[i].arrival_time;
+                    resp_time[i] = TRUE;
+                }
+                if(remain_burst_time[i] > quantum)
+                {
+                    current_time += quantum;
+                    remain_burst_time[i]-=quantum;
+                }
+                else
+                {
+                    current_time += remain_burst_time[i];
+                    p[i].waiting_time = current_time -p[i].burst;
+                    remain_burst_time[i] = 0;
+
+                }
+            }
+        }
+        if(check == TRUE)
+            break;
+
+    }
+     for(int i =0 ; i<lsize ; i++)
+    {
+        p[i].turnaround_time = p[i].burst + p[i].waiting_time -p[i].arrival_time;
+    }
+
+    //back up all the values of the waiting time in the linked list 
+    for(int i=0 ; i<lsize ; i++)
+    {
+        header->Waiting_time = p[i].waiting_time;
+        header->Turn_around_time = p[i].turnaround_time;
+        header= header->next;
+    }
+  
+    /*cout<<p[0].turnaround_time<<endl;
+    cout<<p[1].turnaround_time<<endl;
+    cout<<p[2].turnaround_time<<endl;*/
+    free(remain_burst_time);
 }
 //------------------------------------Function to sort accorging to a burst time------------------------------------//
 void mysort_Br(struct List_process *&head,struct List_process *ht,struct List_process *temp)
