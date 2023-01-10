@@ -665,15 +665,15 @@ void Display(struct List_process *header)
     if(header == NULL)
         puts("the list is empty");
     struct List_process *temp= header;
-    cout<<"             "<<"Burst_time\t\t"<<"Arrival_time\t\t"<<"Priority"<<endl;
-    cout<<"--------------------------------------------------------------------------"<<endl;
+    cout<<"             "<<"Burst_time\t\t"<<"Arrival_time\t\t"<<"Priority\t\t"<<"Waiting_Time"<<endl;
+    cout<<"-------------------------------------------------------------------------------------------------"<<endl;
     while(temp != NULL)
     {
+        puts(" ");
         cout <<"Process " << temp->Id << "\t " << temp->Burst_time <<"\t\t      "<<temp->Arrival_time
-             <<"\t\t\t   " << temp->Priority<<endl ;
-        cout<<"--"<<temp->Waiting_time;
-        cout << " ----" << temp->Turn_around_time<<endl;
+             <<"\t\t\t   " << temp->Priority<<"\t\t\t\t"<<temp->Waiting_time<<endl;
         
+        cout<<"__________|________________|____________________|_______________________|___________________________|"<<endl;    
         temp= temp->next;
     
     }
@@ -749,11 +749,9 @@ void Round_robin()
         total_response_time += p[i].response_time; 
 
     }
-    Display(head);
     // store the average waiting time and the turnaround time in the linked list
     head->Avg_wt = (double)total_waiting_time/(double)len;
     head->Avg_tat = (double)total_turnaround_time/(double)len;
-    sleep(5);
     show_resultP(head,"RR");
     
 }
@@ -851,9 +849,11 @@ int Turn_around_time(struct List_process *header)
 {
     //------------------------------------------- Turn Around Time ------------------------------------------//
     struct List_process *temp3= header;
+    int current=0;
     while(temp3!=NULL)
     {
-        temp3->Turn_around_time = temp3->Waiting_time + temp3->Burst_time;
+        current+= temp3 -> Burst_time ;
+        temp3->Turn_around_time = current- temp3->Arrival_time;
         temp3 = temp3->next;
     }
     return 0;
