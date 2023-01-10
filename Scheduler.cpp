@@ -7,14 +7,28 @@
 #include <string.h>
 #include <stdio.h>
 #include <climits>
-#define  size  1024         //string input data size
+#define  size  1024  
+#define TRUE 1
+#define FALSE 0       //string input data size
 
 using namespace std;
 
+struct _process
+{
+    int id;
+    int arrival_time;
+    int waiting_time;
+    int return_time;
+    int turnaround_time;
+    int response_time;
+    int burst;
+    int priority;
+    int completed;
+}p[size];
 //------------------------Prototypes function of  all  Scheduling method --------------------------------//
 void First_come();
 void Shortest_jobNP();              // shortest_jobs for the Non-preemptive
-void Shortest_jobP();               // shortest_jobs for the Preemptive
+void Shortest_jobP(_process *);               // shortest_jobs for the Preemptive
 void Priority_schNP();              // Priority scheduling for the Non-preemptive
 void Priority_schP() ;               // Priority scheduling for the Preemptive
 void Round_robin();
@@ -25,7 +39,9 @@ void Second_Menu(string);
 void Scheduling_Method(string);
 void Preemptive_Mode(string,string);
 int Show_Result(struct List_process * , string, double);
+void show_resultP(struct List_process *, string);
 int process_counter(struct List_process *);
+//void process_init(struct _process *,struct List_process *);
 
 //------------------------------------- link list prototypes ---------------------------------------//
 struct List_process *createNode(int , int , int );
@@ -53,10 +69,9 @@ struct List_process
     int Priority;
     int Waiting_time;
     int Turn_around_time;
-    bool is_completed = false;
-    int bt_remaining;
-    int completion_time;
-    bool is_first = false;
+    double Avg_wt;
+    double Avg_tat;
+    string mode;
     struct List_process *next;
 
 };
@@ -70,7 +85,6 @@ char *File_out;    // store the ouput file
 struct List_process *header=NULL;     //original linked list root
 
 int num = 0;  // keep track on the Id number of new created process node
-
 
 //---------------------------- function to open the input input ----------------------------------//
 void openFile(ifstream& inFile , char *fname)
@@ -160,6 +174,120 @@ struct List_process *processFile(ifstream& inFile, struct List_process *hdr) // 
     return hdr;
 
 }
+
+void Time_cal(struct List_process *header)
+{
+    int current_time =0;  // variable to store the current time 
+    int total_burst_time =0;    // variable to store the total execution time
+    int shortes_remain_time ;   // variable to store the index with minimal work
+    int len = process_counter(header); // store the number of element in  the linked list
+    int k =0;       // variable store the currently running process number
+    // dynamically allocate an array to store the remaining execution time for each process
+    int *remain_burst_time = (int *)malloc(sizeof(int)*len);
+    // dynamically allocate an array to be used to check the response time
+    int *count = (int *)malloc(sizeof(int)*len);
+    // repeat untill we reach the last process
+    for(int i = 0; i <len ; i++)
+    {
+        // initialization of a count array and the remain_burst_time array
+        count[i]=0;
+        remain_burst_time[i] = p[i].burst;
+        total_burst_time+= p[i].burst; // calculate  the total burst time by sum up all burst of each process
+    }
+
+    while(current_time < total_burst_time)
+    {
+        shortes_remain_time = INT_MAX;
+        // if the current_time is less than the arrival time of the last process entered
+        if(current_time <= p[len-1].arrival_time)
+        {
+            for(int i = 0 ; i<len ; i++)
+            {
+                if((p[i].completed == FALSE) && (p[i].arrival_time <= current_time)&&(shortes_remain_time > remain_burst_time[i]))
+                {
+                    //update the minimum work time
+                    shortes_remain_time = remain_burst_time[i];
+                    k=i; // update minimum working process index
+                }
+            }
+        }
+        else        // when there is no more a new process coming in
+        {
+            for(int i=0 ; i<len ; i++)
+            {
+                if((p[i].completed == FALSE)&&(shortes_remain_time > remain_burst_time[i]))
+                {
+                    shortes_remain_time = remain_burst_time[i];
+                    k=i;
+                }
+            }
+        }
+        if(count[k] == 0) // when the selected process starts for the first time
+        {
+            count[k]++; // indicate that is not the initial run
+            p[k].response_time = current_time; // save the response time of the running process
+        }
+        remain_burst_time[k]--; // decrease the remaining time of the executed process
+        current_time ++;           // increment the current time
+// When the remaing execution time of the process become 0
+        if(remain_burst_time[k] ==0)
+        {
+            p[k].completed = TRUE;   // change the done state
+            // calculate the waiting_time
+            p[k].waiting_time = current_time - p[k].burst - p[k].arrival_time;
+            // calculte the return time
+            p[k].return_time = current_time;
+        }
+    }
+
+    //back up all the values of the waiting time in the linked list 
+    for(int i=0 ; i<len ; i++)
+    {
+        header->Waiting_time = p[i].waiting_time;
+        header= header->next;
+    }
+   /* check
+    cout<<p[0].waiting_time<<endl;
+    cout<<p[1].waiting_time<<endl;
+    cout<<p[2].waiting_time<<endl;*/
+    
+
+    
+    //deallocate memory for dynamically allocates arrays
+    free(count);
+    free(remain_burst_time);
+
+}
+void process_init(struct List_process *ht)
+{
+    int i=0;
+    struct List_process *h= ht;
+    if(header == NULL)
+        puts("the list is empty");
+    struct List_process *temp= ht;
+    while(temp != NULL)
+    {
+        p[i].id = temp->Id;
+        p[i].arrival_time = temp->Arrival_time ;
+        p[i].burst = temp->Burst_time;
+        p[i].priority = temp->Priority;
+        p[i].waiting_time = 0;
+        p[i].return_time =0;
+        p[i].response_time =0;
+        p[i].completed = FALSE;
+        i++;
+        temp= temp->next;
+    
+    }
+    puts("");
+    /* test if the transfer successed
+    for(int i=0 ; h!=NULL ; i++)
+    {
+        cout<<p[i].id<<" "<<" "<<p[i].burst<<" "<<"" <<p[i].arrival_time<<" "<<p[i].priority<<endl;
+        h=h->next;
+    }*/
+
+}
 int main(int argc , char *argv[])
 {
     // make sure the number of arguments given by the user is not less than 4
@@ -198,6 +326,7 @@ int main(int argc , char *argv[])
     //check if we sucessfully create copy a linked with the data inside
    // Display(head);
     inFile.close();
+   
 
 
 
@@ -425,7 +554,7 @@ void Scheduling_Method(string choice_str)
                 
                 break;
             case 2:
-                Shortest_jobP();
+                Shortest_jobP(p);
                 break;
             case 3:
                 Priority_schP();
@@ -489,7 +618,7 @@ void Preemptive_Mode(string choice_str, string Main)
                     Shortest_jobNP();
                     break;
                 case 2:
-                    Shortest_jobP();
+                    Shortest_jobP(p);
                     break;
                 default:
                     cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
@@ -528,11 +657,53 @@ void Preemptive_Mode(string choice_str, string Main)
 
 }
 
+void show_resultP(struct List_process *h , string S)
+{
+    int choice;
+    system("clear");
+    if(S == "SJF" || S == "RR" || S == "PS" )
+    {
+        do
+        {
+            cout<< "-------------------- CPU Scheduler Simlulator -------------------------------"<< endl;
+            cout<<" 1. Scheduling("<<S<<")\n 2. Preemptive Mode\n "
+                << "3. Show Result\n 4. END PROGRAM\n ";
+            cout<<" OPTION > ";
+            cin >> choice;
+            switch (choice)
+            {
+                case 1:
+                    Scheduling_Method("ON");
+                    break;
+                case 2:
+                    Preemptive_Mode(S,"NO");
+                    break;
+                case 3:
+                    puts(" ");
+                    cout <<"\t   "<< h->mode << endl;
+                    puts(" ");
+                    Display(h);
+                    cout<<"The Avarage Waiting is :" << h->Avg_wt<<endl;
+                    break;
+                case 4:
+                    exit(0);
+                    break;
+            
+                default:
+                cout<<"INCORRECT,Your choice should be a integer number between 1-2 !!!" <<endl;
+                sleep(5);
+                break;
+            }
+        }
+        while(choice>0 && choice <=4);
+    }
 
-
+    
+}
 int Show_Result(struct List_process *h , string S, double avg)
 {
     int choice;
+    system("clear");
     if(S == "FCFS" || S == "SJF" || S =="RR" || S == "PS" )
     {
         do
@@ -551,6 +722,9 @@ int Show_Result(struct List_process *h , string S, double avg)
                     Preemptive_Mode(S,"NO");
                     break;
                 case 3:
+                    puts(" ");
+                    cout <<"\t   "<< h->mode << endl;
+                    puts(" ");
                     Display(h);
                     cout<<"The Avarage Waiting is :" << avg <<endl;
                     break;
@@ -591,6 +765,7 @@ void Display(struct List_process *header)
 void First_come()
 {
     struct List_process *headtemp = cloneList(header);
+    headtemp->mode = "<<You are in First_come Scheduling >>";
     mysort_Ar(headtemp,headtemp,headtemp->next);
     //calculate the Waiting 
     waiting_time(headtemp);
@@ -602,6 +777,7 @@ void First_come()
 void Shortest_jobNP()
 {
     struct List_process *head = cloneList(header);
+    head->mode = "<<You are in Shortest_Job_Scheduling in Nom-preemptive >>";
     //call the sort funtion 
     mysort_Br(head,head,head->next);
 
@@ -613,8 +789,9 @@ void Shortest_jobNP()
     Average_time(head,"SJF");
 }
 void Priority_schNP()
-{
+{   
     struct List_process *head = cloneList(header);
+    head->mode = "<<You are in Priority_Scheduling in Nom-preemptive >>";
     //sort the linked list according to the priority time 
     mysort_Pr(head,head,head->next);
     //calculate the Waiting 
@@ -633,80 +810,45 @@ void Round_robin()
     Show_Result(head,"RR",0);
     
 }
-void Shortest_jobP()
+void Shortest_jobP(struct _process *p)
 {
-    cout<<"You are in the Preemptive Mode for the SJF"<<endl;
     struct List_process *head = cloneList(header);
+    head->mode = "<<You are in Shortest_Job_Scheduling in Preemptive Mode >>" ;
     // Initialize the current time to the earliest arrival time of any process
     mysort_Ar(head,head,head->next);
-    int current_time = head->Arrival_time;
+    int total_waiting_time =0;
+    int total_turnaround_time =0;
+    int total_response_time =0;
 
-    // Initialize the total waiting time and turnaround time to 0
-    double total_waiting_time = 0.0;
-    double total_turnaround_time = 0.0;
+    int len = process_counter(head);
 
-    // Initialize a pointer to the head of the linked list
-    struct List_process *p = head;
-    // While there are still processes remaining to be completed
-    while (p != NULL) {
-        // Select the process with the shortest burst time from the list of processes that have arrived
-        struct List_process* selected = NULL;
-        int shortest_burst_time = INT_MAX;
-        struct List_process *q = head;
-        while (q != NULL) {
-        if (q->Arrival_time <= current_time && q->Burst_time < shortest_burst_time) {
-            selected = q;
-            shortest_burst_time = q->Burst_time;
-        }
-        q = q->next;
-        }
+    process_init(head);
 
-        // Calculate the waiting time and turnaround time for the selected process
-        selected->Waiting_time = current_time - selected->Burst_time ;
-        selected->Turn_around_time = current_time - selected->Arrival_time;
+    Time_cal(head);
 
-        // Update the current time to the completion time of the selected process
-        current_time += selected->Burst_time;
+    for(int i=0 ; i<len ; i++)
+    {
+        p[i].turnaround_time = p[i].return_time -p[i].arrival_time;
 
-        // Add the waiting time and turnaround time of the selected process to the total
-        total_waiting_time += selected->Waiting_time;
-        total_turnaround_time += selected->Turn_around_time;
+        total_waiting_time += p[i].waiting_time;
 
-        // Remove the selected process from the linked list
-        if (selected == head) 
-        {
-            head = head->next;
-        } 
-        else 
-        {
-        struct List_process* prev = head;
-        while (prev->next != selected) 
-        {
-            prev = prev->next;
-        }
-        prev->next = selected->next;
-        }
-        delete selected;
+        total_turnaround_time += p[i].turnaround_time;
 
-        // Update the pointer to the head of the linked list
-        p = head;
+        total_response_time += p[i].response_time; 
     }
+    
+    // store the average waiting time and the turnaround time in the linked list
+    head->Avg_wt = (double)total_waiting_time/(double)len;
+    head->Turn_around_time = (double)total_turnaround_time/(double)len;
 
-    // Calculate the average waiting time and average turnaround time
-    // Calculate the average waiting time and average turnaround time
-    double num_processes = process_counter(header);  // number of processes in the linked list
-    double average_waiting_time = total_waiting_time / num_processes;
-    double average_turnaround_time = total_turnaround_time / num_processes;
-
-    // Print the results
-    std::cout << "Average waiting time: " << average_waiting_time << std::endl;
-    std::cout << "Average turnaround time: " << average_turnaround_time << std::endl;
+    show_resultP(head,"SJF");
 
 
 }
 void Priority_schP()
 {
-    cout <<"you are in the Priority scheduling preemptive"<<endl;
+    //"<<You are in Priority_Scheduling in Preemptive Mode >>"
+    
 
 }
 //----------------------------------------Function to calculate the waiting time -------------------------------------//
@@ -864,12 +1006,8 @@ int process_counter(struct List_process *header)
 	int Arr = 0;
 	while (temp != NULL)
 	{
-		Arr+=temp->Arrival_time;
+		Arr++;
 		temp = temp->next;
 	}
-
-	return counter;
+	return Arr;
 }
-
-
-
